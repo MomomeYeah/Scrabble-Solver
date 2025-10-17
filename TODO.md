@@ -1,0 +1,4 @@
+- Convert to Tile object when placing Tiles in rack or on board?
+- Tests for solver
+- Populate initial board based on entered Tiles
+- Solve when words already on the board
