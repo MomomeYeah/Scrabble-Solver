@@ -1,4 +1,4 @@
-- Convert to Tile object when placing Tiles in rack or on board?
+- Inconsistent use of cell.tile vs. cell.isEmpty
 - use contexts + prop types
 - Switch to Redux for state
 - Tests for solver

@@ -1,4 +1,4 @@
-import { createContext, useState } from 'react'
+import { useState } from 'react'
 import './App.css'
 
 import { Board } from './game/board';
@@ -8,7 +8,7 @@ import { TripleLetterCellType } from './game/celltype';
 import { DoubleWordCellType } from './game/celltype';
 import { TripleWordCellType } from './game/celltype';
 import { Move } from './game/move';
-import { BLANK, BlankTile, TILES, Tile } from './game/tile';
+import { BLANK, BlankTile, Tile } from './game/tile';
 import { Solver } from './solver/solver';
 
 let board = new Board();
@@ -182,6 +182,9 @@ function App() {
 
     function handleClickSolve() {
         board.populate(boardTiles);
+        board.calculateAnchorsAndPlayableLetters();
+        console.log(`${board}`);
+        console.log(board.anchors);
 
         let foundMoves = solver.getFirstMove(board, rackTiles.filter(l => l !== null));
         setMoves(foundMoves);

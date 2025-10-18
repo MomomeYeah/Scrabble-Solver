@@ -8,8 +8,8 @@ export class Cell {
 	cellType: CellType;
 	tile: Tile | null;
 	isAnchor: boolean;
-	validCrossChecksAcross: Array<string>;
-	validCrossChecksDown: Array<string>;
+	// The set of valid letters that could be played in this cell based on the tiles around it, both north-south and east-west
+	playableLetters: Array<string>;
 	
 	constructor(row: number, column: number, celltype: CellType) {
 		this.row = row;
@@ -17,19 +17,13 @@ export class Cell {
 		this.cellType = celltype;
 		this.tile = null;
 		this.isAnchor = false;
-		this.validCrossChecksAcross = new Array<string>();
-		this.validCrossChecksDown = new Array<string>();
-	}
-	
-	clearCrossChecks(): void {
-		this.validCrossChecksAcross = new Array<string>();
-		this.validCrossChecksDown = new Array<string>();
+		this.playableLetters = new Array<string>();
 	}
 	
 	reset(): void {
 		this.tile = null;
 		this.isAnchor = false;
-        this.clearCrossChecks();
+		this.playableLetters = new Array<string>();
 	}
 	
 	isEmpty(): boolean {
@@ -43,19 +37,5 @@ export class Cell {
 
         this.tile = tile;
         return tile.points * this.cellType.getTileMultiplier();
-	}
-	
-	setIsAnchor(isAnchor: boolean): void {
-		this.isAnchor = isAnchor;
-	}
-	
-	// when playing DOWN - letters that will form valid ACROSS words
-	setAcrossCrossCheck(validCrossChecksAcross: Array<string>): void {
-		this.validCrossChecksAcross = validCrossChecksAcross;
-	}
-	
-	// when playing ACROSS - letters that will form valid DOWN words
-	setDownCrossCheck(validCrossChecksDown: Array<string>): void {
-		this.validCrossChecksDown = validCrossChecksDown;
 	}
 }

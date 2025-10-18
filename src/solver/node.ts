@@ -23,7 +23,7 @@ export class Node {
 	}
 	
 	hasChild(child: string): boolean {
-		return this.childrenMap.has(child);
+        return this.childrenMap.has(child);
 	}
 	
 	getChild(child: string): Node | null {
@@ -45,10 +45,10 @@ export class Node {
 	
     containsSuffix(suffix: Array<string>): boolean {
 		let n: Node = this;
-        suffix.forEach((char) => {
+        for (const char of suffix) {
             if (! n.hasChild(char)) return false;
             n = n.getChild(char)!;
-        });
+        }
 
         return n.hasChild(Node.EOW);
     }

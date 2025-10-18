@@ -30,12 +30,9 @@ TW,  ,  ,DL,  ,  ,  ,TW,  ,  ,  ,DL,  ,  ,TW`;
 export class Board {
 	
 	boardsize: number = 15;
-	// TODO: this could just be a function checking if any tiles have been played
 	wordsPlayed: boolean;
 	cells: Array<Array<Cell>>;
 	anchors: Array<Cell>;
-	// TODO: can probably lose this now
-	dictionaryLines: Array<string>;
     dictionary: Set<string>;
 	trie: Trie;
 	
@@ -73,15 +70,21 @@ export class Board {
         });
 
         // initialise Trie
-        this.dictionaryLines = dictionary.split('\n');
-        this.dictionary = new Set<string>(this.dictionaryLines);
+        let dictionaryLines: Array<string> = dictionary.split('\n');
+        this.dictionary = new Set<string>(dictionaryLines);
         this.trie = new Trie();
-        this.trie.load(this.dictionaryLines);
-        
-        // this.calculateAnchorsAndCrossChecks();
+        this.trie.load(dictionaryLines);
 	}
 
+    /** Fully reset the board, returning it to a pristine state. */
     reset(): void {
+        // reset the wordsPlayed flag
+        this.wordsPlayed = false;
+
+        // clear the list of anchors
+        this.anchors = new Array<Cell>();
+
+        // reset each cell
         this.cells.forEach((rowCells) => {
             rowCells.forEach((cell) => {
                 cell.reset();
@@ -89,19 +92,26 @@ export class Board {
         });
     }
 
+    /** Populate the board with the given set of tiles.
+     * 
+     * Any cells without a corresponding tile are reset, meaning this function is safe to
+     * call on an already-populated board.
+     */
     populate(tiles: Array<Array<Tile | null>>): void {
+        this.wordsPlayed = false;
         tiles.forEach((rowTiles: Array<Tile | null>, rowIndex: number) => {
             rowTiles.forEach((tile: Tile | null, columnIndex: number) => {
                 this.cells[rowIndex][columnIndex].reset();
-                tile && this.cells[rowIndex][columnIndex].placeTile(tile);
+                if (tile) {
+                    this.cells[rowIndex][columnIndex].placeTile(tile);
+                    this.wordsPlayed = true;
+                }
             });
         });
-        
-        console.log(`${this}`);
     }
-	
-	toString(): string {
-		let ret: string = "";
+
+    toString(): string {
+		let ret: string = `Words played: ${this.wordsPlayed}\n\n`;
         this.cells.forEach((row) => {
             row.forEach((c) => {
                 if (c.isAnchor) {
@@ -124,8 +134,178 @@ export class Board {
 		}
 		return true;
 	}
+
+    /** Return true if the given cell has any neighbours, either in the north-south or east-west direction */
+    hasNeighbour(row: number, column: number): boolean {
+        // check north-south direction
+        if (this.inBounds(row - 1, column) && ! this.cells[row - 1][column].isEmpty()) {
+            return true;
+        }
+        if (this.inBounds(row + 1, column) && ! this.cells[row + 1][column].isEmpty()) {
+            return true;
+        }
+
+        // check east-west direction
+        if (this.inBounds(row, column - 1) && ! this.cells[row][column - 1].isEmpty()) {
+            return true;
+        }
+        if (this.inBounds(row, column + 1) && ! this.cells[row][column + 1].isEmpty()) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    /** Calculate the prefix for a given cell.
+     * 
+     * The prefix is the continuous set of tiles, if any, that have been played to the left of the 
+     * given cell (for ACROSS words), or above the given cell (for DOWN words)
+     */
+    getPrefixForDirection(row: number, column: number, direction: PlayDirection): Array<string> {
+        let prefix: Array<string> = new Array<string>();
+		
+		let prefixRow: number = row;
+		let prefixColumn: number = column;
 	
-	// TODO: this will need to be expanded for the case where words already existed on the board
+        function decrementIfInBounds(num: number): number {
+            return num > 0 ? num - 1 : num;
+        }
+
+		// move back until we find an empty square
+        // note the use of dowhile here - cross checks are only calculated for empty squares, so 
+        // the while condition would always fail if run on the initial square
+		do {
+            if (direction == "ACROSS") {
+				prefixColumn = decrementIfInBounds(prefixColumn);
+				if (prefixColumn == 0) {
+					break;
+				}
+			} else {
+				prefixRow = decrementIfInBounds(prefixRow);
+				if (prefixRow == 0) {
+					break;
+				}
+			}
+		} while (! this.cells[prefixRow][prefixColumn].isEmpty());
+		
+		// if we haven't moved, there's no prefix
+		if (prefixRow == row && prefixColumn == column) {
+			return new Array<string>();
+		}
+		
+		// we have moved, so if the square we are on is empty, we've moved one too far. The prefix 
+        // might start on the edge of the board, in which case the current square will not be empty
+		if (this.cells[prefixRow][prefixColumn].isEmpty()) {
+			if (direction == "ACROSS") {
+				prefixColumn++;
+			} else {
+				prefixRow++;
+			}
+		}
+		
+        // move back to the initial square, adding tiles along the way to the prefix
+		while (prefixRow != row || prefixColumn != column) {
+			prefix.push(this.cells[prefixRow][prefixColumn].tile!.letter);
+			if (direction == "ACROSS") {
+				prefixColumn++;
+			} else {
+				prefixRow++;
+			}
+		}
+		
+		return prefix;
+	}
+	
+	/** Calculate the suffix for a given cell.
+     * 
+     * The suffix is the continuous set of tiles, if any, that have been played to the right of the 
+     * given cell (for ACROSS words), or below the given cell (for DOWN words)
+     */
+    getSuffixForDirection(row: number, column: number, direction: PlayDirection): Array<string> {
+		let suffix: Array<string> = new Array<string>();
+		
+		let suffixRow: number = row;
+		let suffixColumn: number = column;
+
+        function incrementIfInBounds(num: number, boardSize: number): number {
+            return num === boardSize - 1 ? num : num + 1;
+        }
+		
+		if (direction == "ACROSS") {
+			suffixColumn = incrementIfInBounds(suffixColumn, this.boardsize);
+		} else {
+			suffixRow = incrementIfInBounds(suffixRow, this.boardsize);
+		}
+		
+		// if we haven't moved, there's no suffix
+		if (suffixRow == row && suffixColumn == column) {
+			return new Array<string>();
+		}
+		
+		while (! this.cells[suffixRow][suffixColumn].isEmpty()) {
+			suffix.push(this.cells[suffixRow][suffixColumn].tile!.letter);
+			if (direction == "ACROSS") {
+				suffixColumn++;
+				if (suffixColumn == this.boardsize) {
+					break;
+				}
+			} else {
+				suffixRow++;
+				if (suffixRow == this.boardsize) {
+					break;
+				}
+			}
+		}
+		
+		return suffix;
+	}
+
+    /** For each cell, calculate whether it is an anchor cell, and if so, calculate all playable letters.
+     * 
+     * An anchor cell is one that is empty, but that is adjacent to a non-empty cell.
+     * 
+     * The set of playable letters for a cell is determined from the prefix and suffix.
+     * 
+     * This function assumes either that the board is empty, or that it has been populated via this.populate()
+     */
+    calculateAnchorsAndPlayableLetters(): void {
+        // If the board is empty, there are no anchors
+        if (! this.wordsPlayed) {
+            return;
+        }
+
+        // first, clear the set of anchors
+        this.anchors = new Array<Cell>();
+
+        // for each empty cell with non-empty neighbours, mark is as an anchor and calculate playable letters
+        this.cells.forEach((row, rowIndex) => {
+            row.forEach((cell, columnIndex) => {
+                if (cell.isEmpty() && this.hasNeighbour(rowIndex, columnIndex)) {
+                    // mark the cell as an anchor
+                    cell.isAnchor = true;
+                    this.anchors.push(cell);
+
+                    // calculate playable letters in both ACROSS and DOWN directions
+                    let prefixAcross: Array<string> = this.getPrefixForDirection(rowIndex, columnIndex, "ACROSS");
+                    let suffixAcross: Array<string> = this.getSuffixForDirection(rowIndex, columnIndex, "ACROSS");
+                    let playableLettersAcross: Array<string> = this.trie.getValidLettersFromPrefixandSuffix(prefixAcross, suffixAcross);
+
+                    let prefixDown: Array<string> = this.getPrefixForDirection(rowIndex, columnIndex, "DOWN");
+                    let suffixDown: Array<string> = this.getSuffixForDirection(rowIndex, columnIndex, "DOWN");
+                    let playableLettersDown: Array<string> = this.trie.getValidLettersFromPrefixandSuffix(prefixDown, suffixDown);
+
+                    // the overall set of playable letters is the intersection of playableLettersAcross and playableLettersDown
+                    cell.playableLetters = playableLettersAcross.filter((letter) => playableLettersDown.includes(letter));
+
+                    console.log(`Cell ${rowIndex}, ${columnIndex}:
+Playable letters across: ${playableLettersAcross}
+Playable letters down: ${playableLettersDown}
+Playabout letters: ${cell.playableLetters}`);
+                }
+            });
+        });
+    }
+	
 	getScore(placements: Array<TilePlacement>): number {
 		let score = 0;
 		let wordMultiplier = 1;
