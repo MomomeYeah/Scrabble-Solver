@@ -5,12 +5,11 @@ import { Tile } from "../game/tile.js";
 
 export class Solver {
 
-	getFirstMove(b: Board, hand: Array<string>): Array<Move> {
+	getFirstMove(b: Board, hand: Array<Tile>): Array<Move> {
 		const startTime = performance.now();
-		const handTiles = Tile.toTileList(hand);
 
 		// First, get every word that can be built from the tiles in our hand
-		let words: Array<Array<Tile>> = b.trie.getWordsFromTiles(handTiles);
+		let words: Array<Array<Tile>> = b.trie.getWordsFromTiles(hand);
 
 		// now, for each word, place it in every possible starting position, i.e. all positions
 		// that would allow the word to cover the center square

@@ -1,4 +1,6 @@
 - Convert to Tile object when placing Tiles in rack or on board?
+- use contexts + prop types
+- Switch to Redux for state
 - Tests for solver
-- Populate initial board based on entered Tiles
 - Solve when words already on the board
+- Fully solve final moves once bag is empty

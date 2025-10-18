@@ -39,17 +39,6 @@ export class Tile {
         this.points = TILES[letter].points;
     }
 
-    static toTileList(letters: Array<string>): Array<Tile> {
-        let tileList: Array<Tile> = new Array<Tile>();
-        letters.forEach((letter) => {
-            tileList.push(
-                letter === BLANK ? new BlankTile() : new Tile(letter)
-            );
-        });
-        
-        return tileList;
-    }
-    
     static contains(tiles: Array<Tile>, letter: string): boolean {
         for (let i = 0; i < tiles.length; i++) {
             if (tiles[i].letter === letter) return true;

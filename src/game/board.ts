@@ -1,6 +1,7 @@
 import { Cell } from './cell';
 import type { CellType } from './celltype';
 import { BaseCellType, DoubleLetterCellType, TripleLetterCellType, DoubleWordCellType, TripleWordCellType } from './celltype';
+import { Tile } from './tile';
 import { TilePlacement } from './tileplacement';
 
 import { dictionary } from '../data/dictionary'
@@ -79,18 +80,36 @@ export class Board {
         
         // this.calculateAnchorsAndCrossChecks();
 	}
+
+    reset(): void {
+        this.cells.forEach((rowCells) => {
+            rowCells.forEach((cell) => {
+                cell.reset();
+            });
+        });
+    }
+
+    populate(tiles: Array<Array<Tile | null>>): void {
+        tiles.forEach((rowTiles: Array<Tile | null>, rowIndex: number) => {
+            rowTiles.forEach((tile: Tile | null, columnIndex: number) => {
+                this.cells[rowIndex][columnIndex].reset();
+                tile && this.cells[rowIndex][columnIndex].placeTile(tile);
+            });
+        });
+        
+        console.log(`${this}`);
+    }
 	
 	toString(): string {
 		let ret: string = "";
         this.cells.forEach((row) => {
             row.forEach((c) => {
                 if (c.isAnchor) {
-                    //ret += "* ";
-                    ret += c.cellType.toString() + " ";
+                    ret += "* ";
                 } else if (c.tile != null) {
                     ret += c.tile.letter + " ";
                 } else {
-                    ret += c.cellType.toString() + " ";
+                    ret += c.cellType.toString();
                 }
             });
             ret += "\n";

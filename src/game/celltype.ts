@@ -62,7 +62,7 @@ export class TripleWordCellType implements ICellType {
 
 export class BaseCellType implements ICellType {
     toString(): string {
-        return " ";
+        return "  ";
     }
 
     getTileMultiplier(): number {
