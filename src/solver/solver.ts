@@ -34,12 +34,24 @@ export class Solver {
 			}
 		});
 
-		const endTime = performance.now()
+		const endTime = performance.now();
 		let searchTimeMS = (endTime - startTime).toFixed(2);
         console.log(`Found ${moves.length} moves in ${searchTimeMS}ms`);
         
 		let sortedMoves: Array<Move> = moves.slice().sort((a: Move, b: Move) => {return b.score - a.score;}).slice(0, 10);
 
 		return sortedMoves;
+	}
+
+	getMove(b: Board, hand: Array<Tile>): Array<Move> {
+		const startTime = performance.now();
+
+		let moves: Array<Move> = new Array<Move>();
+
+		const endTime = performance.now();
+		let searchTimeMS = (endTime - startTime).toFixed(2);
+        console.log(`Found ${moves.length} moves in ${searchTimeMS}ms`);
+
+		return moves;
 	}
 }

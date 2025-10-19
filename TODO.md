@@ -3,4 +3,10 @@
 - Switch to Redux for state
 - Tests for solver
 - Solve when words already on the board
+    - Store directional prefixes for all cells
+    - Store directional sum of prefix and suffix tiles for all cells
+    - Function to generate prefixes with a given maximum length?
+        - Constrained by tiles in the rack
+        - None of the prefixes may be words
+        - Function to count empty prefix cells
 - Fully solve final moves once bag is empty

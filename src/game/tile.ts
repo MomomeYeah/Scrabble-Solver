@@ -39,6 +39,10 @@ export class Tile {
         this.points = TILES[letter].points;
     }
 
+    static toLetterList(tiles: Array<Tile>): Array<string> {
+        return tiles.map((tile) => tile.letter);
+    }
+
     static contains(tiles: Array<Tile>, letter: string): boolean {
         for (let i = 0; i < tiles.length; i++) {
             if (tiles[i].letter === letter) return true;

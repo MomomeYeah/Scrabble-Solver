@@ -62,7 +62,7 @@ export class Trie {
 		return words;
 	}
 	
-	getValidLettersFromPrefixandSuffix(prefix: Array<string>, suffix: Array<string>): Array<string> {
+	getValidLettersFromPrefixandSuffix(prefix: Array<Tile>, suffix: Array<Tile>): Array<string> {
 		let validLetters: Array<string> = new Array<string>();
 		let n: Node | null = this.root;
 		
@@ -74,8 +74,9 @@ export class Trie {
 			return validLetters;
 		}
 		
-		while (prefix.length > 0 && n != null) {
-			n = n.getChild(prefix.shift()!);
+		let prefixLetters: Array<string> = Tile.toLetterList(prefix);
+		while (prefixLetters.length > 0 && n != null) {
+			n = n.getChild(prefixLetters.shift()!);
 		}
 		
 		// if we get through part or all of the prefix and there are no nodes left
@@ -96,7 +97,7 @@ export class Trie {
 			// for each child of the current node
 			n.childrenList.forEach((childNode) => {
 				// if the child is not the end-of-word marker, and it contains the suffix, add it
-				if (childNode.letter != Node.EOW && childNode.containsSuffix(suffix)) {
+				if (childNode.letter != Node.EOW && childNode.containsSuffix(Tile.toLetterList(suffix))) {
 					validLetters.push(childNode.letter);
 				}
 			});

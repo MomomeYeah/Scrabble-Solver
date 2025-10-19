@@ -161,8 +161,8 @@ export class Board {
      * The prefix is the continuous set of tiles, if any, that have been played to the left of the 
      * given cell (for ACROSS words), or above the given cell (for DOWN words)
      */
-    getPrefixForDirection(row: number, column: number, direction: PlayDirection): Array<string> {
-        let prefix: Array<string> = new Array<string>();
+    getPrefixForDirection(row: number, column: number, direction: PlayDirection): Array<Tile> {
+        let prefix: Array<Tile> = new Array<Tile>();
 		
 		let prefixRow: number = row;
 		let prefixColumn: number = column;
@@ -190,7 +190,7 @@ export class Board {
 		
 		// if we haven't moved, there's no prefix
 		if (prefixRow == row && prefixColumn == column) {
-			return new Array<string>();
+			return new Array<Tile>();
 		}
 		
 		// we have moved, so if the square we are on is empty, we've moved one too far. The prefix 
@@ -205,7 +205,7 @@ export class Board {
 		
         // move back to the initial square, adding tiles along the way to the prefix
 		while (prefixRow != row || prefixColumn != column) {
-			prefix.push(this.cells[prefixRow][prefixColumn].tile!.letter);
+			prefix.push(this.cells[prefixRow][prefixColumn].tile!);
 			if (direction == "ACROSS") {
 				prefixColumn++;
 			} else {
@@ -213,7 +213,7 @@ export class Board {
 			}
 		}
 		
-		return prefix;
+        return prefix;
 	}
 	
 	/** Calculate the suffix for a given cell.
@@ -221,8 +221,8 @@ export class Board {
      * The suffix is the continuous set of tiles, if any, that have been played to the right of the 
      * given cell (for ACROSS words), or below the given cell (for DOWN words)
      */
-    getSuffixForDirection(row: number, column: number, direction: PlayDirection): Array<string> {
-		let suffix: Array<string> = new Array<string>();
+    getSuffixForDirection(row: number, column: number, direction: PlayDirection): Array<Tile> {
+		let suffix: Array<Tile> = new Array<Tile>();
 		
 		let suffixRow: number = row;
 		let suffixColumn: number = column;
@@ -239,11 +239,11 @@ export class Board {
 		
 		// if we haven't moved, there's no suffix
 		if (suffixRow == row && suffixColumn == column) {
-			return new Array<string>();
+			return new Array<Tile>();
 		}
 		
 		while (! this.cells[suffixRow][suffixColumn].isEmpty()) {
-			suffix.push(this.cells[suffixRow][suffixColumn].tile!.letter);
+			suffix.push(this.cells[suffixRow][suffixColumn].tile!);
 			if (direction == "ACROSS") {
 				suffixColumn++;
 				if (suffixColumn == this.boardsize) {
@@ -286,21 +286,27 @@ export class Board {
                     this.anchors.push(cell);
 
                     // calculate playable letters in both ACROSS and DOWN directions
-                    let prefixAcross: Array<string> = this.getPrefixForDirection(rowIndex, columnIndex, "ACROSS");
-                    let suffixAcross: Array<string> = this.getSuffixForDirection(rowIndex, columnIndex, "ACROSS");
-                    let playableLettersAcross: Array<string> = this.trie.getValidLettersFromPrefixandSuffix(prefixAcross, suffixAcross);
+                    cell.prefixForAcross = this.getPrefixForDirection(rowIndex, columnIndex, "ACROSS");
+                    cell.suffixForAcross = this.getSuffixForDirection(rowIndex, columnIndex, "ACROSS");
+                    let playableLettersAcross: Array<string> = this.trie.getValidLettersFromPrefixandSuffix(cell.prefixForAcross, cell.suffixForAcross);
 
-                    let prefixDown: Array<string> = this.getPrefixForDirection(rowIndex, columnIndex, "DOWN");
-                    let suffixDown: Array<string> = this.getSuffixForDirection(rowIndex, columnIndex, "DOWN");
-                    let playableLettersDown: Array<string> = this.trie.getValidLettersFromPrefixandSuffix(prefixDown, suffixDown);
+                    cell.prefixForDown = this.getPrefixForDirection(rowIndex, columnIndex, "DOWN");
+                    cell.suffixForDown = this.getSuffixForDirection(rowIndex, columnIndex, "DOWN");
+                    let playableLettersDown: Array<string> = this.trie.getValidLettersFromPrefixandSuffix(cell.prefixForDown, cell.suffixForDown);
 
                     // the overall set of playable letters is the intersection of playableLettersAcross and playableLettersDown
                     cell.playableLetters = playableLettersAcross.filter((letter) => playableLettersDown.includes(letter));
 
                     console.log(`Cell ${rowIndex}, ${columnIndex}:
+Prefix for Across: ${cell.prefixForAcross}
+Suffix for Across: ${cell.suffixForAcross}
+Points for Across: ${cell.getPrefixAndSuffixSum("ACROSS")}
+Prefix for Down: ${cell.prefixForDown}
+Suffix for Down: ${cell.suffixForDown}
+Points for Down: ${cell.getPrefixAndSuffixSum("DOWN")}
 Playable letters across: ${playableLettersAcross}
 Playable letters down: ${playableLettersDown}
-Playabout letters: ${cell.playableLetters}`);
+Playable letters: ${cell.playableLetters}`);
                 }
             });
         });
