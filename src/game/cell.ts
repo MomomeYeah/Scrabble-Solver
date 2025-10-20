@@ -15,8 +15,10 @@ export class Cell {
 	// The set of tiles directly attached to the top and bottom of this cell, if any
 	prefixForDown!: Array<Tile>;
 	suffixForDown!: Array<Tile>;
-	// The set of valid letters that could be played in this cell based on the tiles around it, both north-south and east-west
-	playableLetters!: Array<string>;
+	// The set of valid letters that could be played in this cell for DOWN words based on the ACROSS prefix and suffix
+	playableLettersAcross!: Array<string>;
+	// The set of valid letters that could be played in this cell for ACROSS words based on the DOWN prefix and suffix
+	playableLettersDown!: Array<string>;
 	
 	constructor(row: number, column: number, celltype: CellType) {
 		this.row = row;
@@ -34,7 +36,8 @@ export class Cell {
 		this.suffixForAcross = new Array<Tile>();
 		this.prefixForDown = new Array<Tile>();
 		this.suffixForDown = new Array<Tile>();
-		this.playableLetters = new Array<string>();
+		this.playableLettersAcross = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+		this.playableLettersDown = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 	}
 	
 	isEmpty(): boolean {

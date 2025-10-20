@@ -62,6 +62,7 @@ export class Trie {
 		return words;
 	}
 	
+	/** Calculate the set of valid letters that can be played between a given prefix and suffix */
 	getValidLettersFromPrefixandSuffix(prefix: Array<Tile>, suffix: Array<Tile>): Array<string> {
 		let validLetters: Array<string> = new Array<string>();
 		let n: Node | null = this.root;

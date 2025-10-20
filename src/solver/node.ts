@@ -21,8 +21,8 @@ export class Node {
 
         return ret;
 	}
-	
-	hasChild(child: string): boolean {
+
+    hasChild(child: string): boolean {
         return this.childrenMap.has(child);
 	}
 	

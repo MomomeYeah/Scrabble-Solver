@@ -186,7 +186,11 @@ function App() {
         console.log(`${board}`);
         console.log(board.anchors);
 
-        let foundMoves = solver.getFirstMove(board, rackTiles.filter(l => l !== null));
+        let hand: Array<Tile> = rackTiles.filter(l => l !== null);
+        // let foundMoves = solver.getFirstMove(board, hand);
+        // setMoves(foundMoves);
+
+        let foundMoves = board.getMove(hand);
         setMoves(foundMoves);
     }
 
