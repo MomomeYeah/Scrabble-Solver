@@ -53,6 +53,22 @@ export class Cell {
         return tile.points * this.cellType.getTileMultiplier();
 	}
 
+	getPrefixForDirection(direction: PlayDirection): Array<Tile> {
+		if (direction === "ACROSS") {
+			return this.prefixForAcross;
+		} else {
+			return this.prefixForDown;
+		}
+	}
+
+	getPlayableLettersForDirection(direction: PlayDirection): Array<string> {
+		if (direction === "ACROSS") {
+			return this.playableLettersAcross;
+		} else {
+			return this.playableLettersDown;
+		}
+	}
+
 	/** Get the sum of the points of all tiles in the directional prefix and suffix in a given direction */
 	getPrefixAndSuffixSum(direction: PlayDirection): number {
 		if (direction === "ACROSS") {

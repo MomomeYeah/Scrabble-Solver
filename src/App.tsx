@@ -9,10 +9,8 @@ import { DoubleWordCellType } from './game/celltype';
 import { TripleWordCellType } from './game/celltype';
 import { Move } from './game/move';
 import { BLANK, BlankTile, Tile } from './game/tile';
-import { Solver } from './solver/solver';
 
 let board = new Board();
-let solver = new Solver();
 
 function ScrabbleTile({tile}: {tile: Tile}) {
     return (
@@ -180,17 +178,17 @@ function App() {
         setShowingMove(null);
     }
 
+    function handleClickHide() {
+        setShowingMove(null);
+    }
+
     function handleClickSolve() {
         setShowingMove(null);
         board.populate(boardTiles);
         board.calculateAnchorsAndPlayableLetters();
         console.log(`${board}`);
-        console.log(board.anchors);
 
         let hand: Array<Tile> = rackTiles.filter(l => l !== null);
-        // let foundMoves = solver.getFirstMove(board, hand);
-        // setMoves(foundMoves);
-
         let foundMoves = board.getMove(hand);
         setMoves(foundMoves);
     }
@@ -207,8 +205,11 @@ function App() {
                 <button onClick={handleClickSolve} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mb-16 mr-2">
                     Find Words
                 </button>
-                <button onClick={handleClickReset} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mb-16 ml-2">
+                <button onClick={handleClickReset} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mb-16 ml-2 mr-2">
                     Reset
+                </button>
+                <button onClick={handleClickHide} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mb-16 ml-2">
+                    Hide Solution
                 </button>
             </div>
             <div className="flex justify-center mb-16">

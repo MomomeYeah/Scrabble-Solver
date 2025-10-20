@@ -1,14 +1,10 @@
 - Inconsistent use of cell.tile vs. cell.isEmpty
-- use contexts + prop types
-- Switch to Redux for state
+- UI Enhancements
+    - clear visual distinction between existing and newly-placed tiles
+    - use contexts + prop types
+    - Switch to Redux for state
 - Tests for solver
 - Solve when words already on the board
-    - Store directional prefixes for all cells
-    - Store directional sum of prefix and suffix tiles for all cells
-    - Function to generate prefixes with a given maximum length?
-        - Constrained by tiles in the rack
-        - None of the prefixes may be words
-        - Function to count empty prefix cells
     - Move all move-finding functions to Solver.ts
     - Move generation currently will use a lettered Tile OR a blank, but it can't try both possibilities
     - Don't bother having a separate function for getting first move - just set centre square to be anchor?
