@@ -455,17 +455,30 @@ Playable letters down: ${cell.playableLettersDown}`);
 
         // "ACROSS" moves first - hopefully we can pull this into a separate function that takes a direction
         this.anchors.forEach((anchorCell) => {
-            if (anchorCell.prefixForAcross && anchorCell.row === 7 && anchorCell.column === 7) {
+            // limit words to cross the centre square for now
+            if (anchorCell.row !== 7 || anchorCell.column !== 7) {
+                return;
+            }
+            // if the anchor cell has an already-placed prefix, find all words starting with that prefix and crossing 
+            // the anchor square
+            if (anchorCell.prefixForAcross.length) {
                 let words: Array<Array<TilePlacement>> = this.getWordsPlayableAtPrefixedCell(anchorCell, hand);
                 words.forEach((word) => {
                     moves.push(new Move(word, "ACROSS", this.getScore(word, "ACROSS")));
                 });
             } else {
-                // starting from each cell in the empty prefix, build up words containing the 
-                // anchor suffix, if any
-                // TODO: would be useful to have a "Trie.getPrefixesOfLength" function so that we 
-                // don't waste time building prefixes that are too short
+                // if the anchor cell does not have a prefix, then for each empty non-anchor cell preceding it, build
+                // all possible words, taking into account tiles already on the board. For each word, make sure that it 
+                // crosses the anchor square
                 let emptyPrefix: Array<Cell> = this.getEmptyPrefixForDirection(anchorCell, "ACROSS");
+                emptyPrefix.forEach((prefixCell) => {
+                    let words: Array<Array<TilePlacement>> = this.getWordsPlayableAtPrefixedCell(prefixCell, hand);
+                    words.forEach((word) => {
+                        if (TilePlacement.coversCell(word, anchorCell)) {
+                            moves.push(new Move(word, "ACROSS", this.getScore(word, "ACROSS")));
+                        }
+                    }); 
+                })
             }
         });
 

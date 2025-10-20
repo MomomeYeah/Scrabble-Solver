@@ -181,6 +181,7 @@ function App() {
     }
 
     function handleClickSolve() {
+        setShowingMove(null);
         board.populate(boardTiles);
         board.calculateAnchorsAndPlayableLetters();
         console.log(`${board}`);

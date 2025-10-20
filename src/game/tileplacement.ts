@@ -1,4 +1,5 @@
 import type { PlayDirection } from "./board.ts";
+import { Cell } from "./cell.js";
 import { Tile } from "./tile.js";
 
 export class TilePlacement {
@@ -12,6 +13,16 @@ export class TilePlacement {
 		this.row = row;
 		this.column = column;
 	}
+
+    static coversCell(placements: Array<TilePlacement>, cell: Cell) {
+		for (const placement of placements ) {
+			if (placement.row === cell.row && placement.column === cell.column) {
+				return true;
+			}
+		}
+
+		return false;
+    }
 	
 	static getPlacements(tiles: Array<Tile>, startingRow: number, startingColumn: number, direction: PlayDirection): Array<TilePlacement> {
 		let placements: Array<TilePlacement> = new Array<TilePlacement>();

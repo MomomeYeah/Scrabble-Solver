@@ -11,5 +11,7 @@
         - Function to count empty prefix cells
     - Move all move-finding functions to Solver.ts
     - Move generation currently will use a lettered Tile OR a blank, but it can't try both possibilities
+    - Don't bother having a separate function for getting first move - just set centre square to be anchor?
+    - Is there a nicer way of building words with no existing prefix, to avoid having to check that it crosses anchor?
 - Fully solve final moves once bag is empty
 - Add validation at various points to make sure that e.g. moves place tiles in valid positions
