@@ -1,12 +1,27 @@
 - Inconsistent use of cell.tile vs. cell.isEmpty
 - UI Enhancements
     - clear visual distinction between existing and newly-placed tiles
+    - smoother experience when entering tiles on board / rack
+        - automatically highlight next square?
+        - arrow keys to change direction?
+    - smoother experience for entering multiple words in sequence
+        - accept suggested word and continue?
     - use contexts + prop types
     - Switch to Redux for state
 - Tests for solver
-- Solve when words already on the board
-    - Move all move-finding functions to Solver.ts
+    - words with a blank tile at edge of the board form a valid word
+    - words with an existing tile at edge of the board form a valid word
+    - all cross-words form valid words
+    - able to connect multiple fragment in one direction
+    - able to form words with existing prefix
+    - able to form words with no existing prefix
+    - able to place e.g. ACROSS words immediately above other ACROSS words
+- Code Tidy-Up
+    - Move all move-finding functions to Solver.ts?
+    - Feels like it should be possible to condense solving functions somewhat
+    - Ensure naming is consistent and intuitive across the board
     - Move generation currently will use a lettered Tile OR a blank, but it can't try both possibilities
+        - This may not be true - need to test
     - Don't bother having a separate function for getting first move - just set centre square to be anchor?
     - Is there a nicer way of building words with no existing prefix, to avoid having to check that it crosses anchor?
 - Fully solve final moves once bag is empty

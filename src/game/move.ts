@@ -14,6 +14,18 @@ export class Move {
 		this.score = score;
 	}
 
+	getPlacementAt(row: number, column: number): TilePlacement | null {
+		// old-fashioned for-loop here instead of forEach, as forEach does not allow early termination
+		for (let i = 0; i < this.placements.length; i++) {
+			const placement = this.placements[i];
+			if (placement.row === row && placement.column === column) {
+				return placement;
+			};
+		}
+
+		return null;
+	}
+
 	getTileAt(row: number, column: number): Tile | null {
 		// old-fashioned for-loop here instead of forEach, as forEach does not allow early termination
 		for (let i = 0; i < this.placements.length; i++) {

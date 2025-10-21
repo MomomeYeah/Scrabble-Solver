@@ -1,6 +1,7 @@
 import type { CellType } from './celltype';
 import type { PlayDirection } from './board';
 import { Tile } from './tile';
+import { TilePlacement } from './tileplacement';
 
 export class Cell {
 	
@@ -10,11 +11,11 @@ export class Cell {
 	tile: Tile | null;
 	isAnchor!: boolean;
 	// The set of tiles directly attached to the left and right of this cell, if any
-	prefixForAcross!: Array<Tile>;
-	suffixForAcross!: Array<Tile>;
+	prefixForAcross!: Array<TilePlacement>;
+	suffixForAcross!: Array<TilePlacement>;
 	// The set of tiles directly attached to the top and bottom of this cell, if any
-	prefixForDown!: Array<Tile>;
-	suffixForDown!: Array<Tile>;
+	prefixForDown!: Array<TilePlacement>;
+	suffixForDown!: Array<TilePlacement>;
 	// The set of valid letters that could be played in this cell for DOWN words based on the ACROSS prefix and suffix
 	playableLettersAcross!: Array<string>;
 	// The set of valid letters that could be played in this cell for ACROSS words based on the DOWN prefix and suffix
@@ -32,10 +33,10 @@ export class Cell {
 	reset(): void {
 		this.tile = null;
 		this.isAnchor = false;
-		this.prefixForAcross = new Array<Tile>();
-		this.suffixForAcross = new Array<Tile>();
-		this.prefixForDown = new Array<Tile>();
-		this.suffixForDown = new Array<Tile>();
+		this.prefixForAcross = new Array<TilePlacement>();
+		this.suffixForAcross = new Array<TilePlacement>();
+		this.prefixForDown = new Array<TilePlacement>();
+		this.suffixForDown = new Array<TilePlacement>();
 		this.playableLettersAcross = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 		this.playableLettersDown = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 	}
@@ -53,7 +54,7 @@ export class Cell {
         return tile.points * this.cellType.getTileMultiplier();
 	}
 
-	getPrefixForDirection(direction: PlayDirection): Array<Tile> {
+	getPrefixForDirection(direction: PlayDirection): Array<TilePlacement> {
 		if (direction === "ACROSS") {
 			return this.prefixForAcross;
 		} else {
@@ -72,13 +73,13 @@ export class Cell {
 	/** Get the sum of the points of all tiles in the directional prefix and suffix in a given direction */
 	getPrefixAndSuffixSum(direction: PlayDirection): number {
 		if (direction === "ACROSS") {
-			let prefixSum: number = this.prefixForAcross.reduce((accum, current_value) => accum + current_value.points, 0);
-			let suffixSum: number = this.suffixForAcross.reduce((accum, current_value) => accum + current_value.points, 0);
+			let prefixSum: number = this.prefixForAcross.reduce((accum, current_value) => accum + current_value.tile.points, 0);
+			let suffixSum: number = this.suffixForAcross.reduce((accum, current_value) => accum + current_value.tile.points, 0);
 
 			return prefixSum + suffixSum;
 		} else {
-			let prefixSum: number = this.prefixForDown.reduce((accum, current_value) => accum + current_value.points, 0);
-			let suffixSum: number = this.suffixForDown.reduce((accum, current_value) => accum + current_value.points, 0);
+			let prefixSum: number = this.prefixForDown.reduce((accum, current_value) => accum + current_value.tile.points, 0);
+			let suffixSum: number = this.suffixForDown.reduce((accum, current_value) => accum + current_value.tile.points, 0);
 
 			return prefixSum + suffixSum;
 		}

@@ -211,17 +211,17 @@ export class Board {
      * The prefix is the continuous set of tiles, if any, that have been played to the left of the 
      * given cell (for ACROSS words), or above the given cell (for DOWN words)
      */
-    getPrefixForDirection(cell: Cell, direction: PlayDirection): Array<Tile> {
-        let prefixTiles: Array<Tile> = new Array<Tile>();
+    getPrefixForDirection(cell: Cell, direction: PlayDirection): Array<TilePlacement> {
+        let prefixes: Array<TilePlacement> = new Array<TilePlacement>();
         let precedingNeighbour: Cell | null = this.getPrecedingNeighbour(cell, direction);
         
         while (precedingNeighbour !== null && ! precedingNeighbour.isEmpty()) {
-            prefixTiles.push(precedingNeighbour.tile!);
+            prefixes.push(new TilePlacement(precedingNeighbour.tile!, cell.row, cell.column, false));
             precedingNeighbour = this.getPrecedingNeighbour(precedingNeighbour, direction);
         }
 
         // Tiles were picked up in backwards order, so reverse before returning
-        return prefixTiles.reverse();
+        return prefixes.reverse();
 	}
 	
 	/** Calculate the suffix for a given cell.
@@ -229,16 +229,16 @@ export class Board {
      * The suffix is the continuous set of tiles, if any, that have been played to the right of the 
      * given cell (for ACROSS words), or below the given cell (for DOWN words)
      */
-    getSuffixForDirection(cell: Cell, direction: PlayDirection): Array<Tile> {
-        let suffixiles: Array<Tile> = new Array<Tile>();
+    getSuffixForDirection(cell: Cell, direction: PlayDirection): Array<TilePlacement> {
+        let suffixes: Array<TilePlacement> = new Array<TilePlacement>();
         let followingNeighbour: Cell | null = this.getFollowingNeighbour(cell, direction);
         
         while (followingNeighbour !== null && ! followingNeighbour.isEmpty()) {
-            suffixiles.push(followingNeighbour.tile!);
+            suffixes.push(new TilePlacement(followingNeighbour.tile!, cell.row, cell.column, false));
             followingNeighbour = this.getFollowingNeighbour(followingNeighbour, direction);
         }
 
-        return suffixiles;
+        return suffixes;
 	}
 
     /** For each cell, calculate whether it is an anchor cell, and if so, calculate all playable letters.
@@ -272,30 +272,32 @@ export class Board {
                     // placed tiles, which would obviously affect the set of valid letters
                     cell.prefixForAcross = this.getPrefixForDirection(cell, "ACROSS");
                     cell.suffixForAcross = this.getSuffixForDirection(cell, "ACROSS");
-                    cell.playableLettersDown = this.trie.getValidLettersFromPrefixandSuffix(cell.prefixForAcross, cell.suffixForAcross);
+                    cell.playableLettersDown = this.trie.getValidLettersFromPrefixandSuffix(TilePlacement.toLetterList(cell.prefixForAcross), TilePlacement.toLetterList(cell.suffixForAcross));
 
                     cell.prefixForDown = this.getPrefixForDirection(cell, "DOWN");
                     cell.suffixForDown = this.getSuffixForDirection(cell, "DOWN");
-                    cell.playableLettersAcross = this.trie.getValidLettersFromPrefixandSuffix(cell.prefixForDown, cell.suffixForDown);
+                    cell.playableLettersAcross = this.trie.getValidLettersFromPrefixandSuffix(TilePlacement.toLetterList(cell.prefixForDown), TilePlacement.toLetterList(cell.suffixForDown));
 
                     // // the overall set of playable letters is the intersection of playableLettersAcross and playableLettersDown
                     // cell.playableLetters = playableLettersAcross.filter((letter) => playableLettersDown.includes(letter));
 
-                    console.log(`Cell ${rowIndex}, ${columnIndex}:
-Prefix for Across: ${cell.prefixForAcross}
-Suffix for Across: ${cell.suffixForAcross}
-Points for Across: ${cell.getPrefixAndSuffixSum("ACROSS")}
-Prefix for Down: ${cell.prefixForDown}
-Suffix for Down: ${cell.suffixForDown}
-Points for Down: ${cell.getPrefixAndSuffixSum("DOWN")}
-Playable letters across: ${cell.playableLettersAcross}
-Playable letters down: ${cell.playableLettersDown}`);
+//                     console.log(`Cell ${rowIndex}, ${columnIndex}:
+// Prefix for Across: ${cell.prefixForAcross}
+// Suffix for Across: ${cell.suffixForAcross}
+// Points for Across: ${cell.getPrefixAndSuffixSum("ACROSS")}
+// Prefix for Down: ${cell.prefixForDown}
+// Suffix for Down: ${cell.suffixForDown}
+// Points for Down: ${cell.getPrefixAndSuffixSum("DOWN")}
+// Playable letters across: ${cell.playableLettersAcross}
+// Playable letters down: ${cell.playableLettersDown}`);
 
-                    console.log(this.getEmptyPrefixForDirection(cell, "ACROSS"));
-                    console.log(this.getEmptyPrefixForDirection(cell, "DOWN"));
+//                     console.log(this.getEmptyPrefixForDirection(cell, "ACROSS"));
+//                     console.log(this.getEmptyPrefixForDirection(cell, "DOWN"));
                 }
             });
         });
+
+        // console.log(`${this}`);
     }
 	
     /** Calculate the score represented by a set of tile placements, including all intersecting words */
@@ -326,22 +328,22 @@ Playable letters down: ${cell.playableLettersDown}`);
 
                 // if the cell has a prefix or suffix in the opposite direction, get the number of points associated
                 // with those tiles, multiply by this cell's word multiplier (if any), and add to the score
-                let intersectingWord: Array<Tile> = new Array<Tile>();
+                let intersectingWord: Array<TilePlacement> = new Array<TilePlacement>();
                 if (direction === "ACROSS") {
                     let scoreOfIntersectingTiles = placementCell.getPrefixAndSuffixSum("DOWN");
                     if (scoreOfIntersectingTiles) {
                         let intersectingWordScore = (placementScore + scoreOfIntersectingTiles) * placementCell.cellType.getWordMultiplier();
                         intersectingWordSum += intersectingWordScore;
-                        intersectingWord = placementCell.prefixForDown.concat([placement.tile], placementCell.suffixForDown);
-                        playedWords.push(intersectingWord.reduce((accum, current_value) => accum + current_value.letter, ""));
+                        intersectingWord = placementCell.prefixForDown.concat([placement], placementCell.suffixForDown);
+                        playedWords.push(intersectingWord.reduce((accum, current_value) => accum + current_value.tile.letter, ""));
                     }
                 } else {
                     let scoreOfIntersectingTiles = placementCell.getPrefixAndSuffixSum("ACROSS");
                     if (scoreOfIntersectingTiles) {
                         let intersectingWordScore = (placementScore + scoreOfIntersectingTiles) * placementCell.cellType.getWordMultiplier();
                         intersectingWordSum += intersectingWordScore;
-                        intersectingWord = placementCell.prefixForDown.concat([placement.tile], placementCell.suffixForDown);
-                        playedWords.push(intersectingWord.reduce((accum, current_value) => accum + current_value.letter, ""));
+                        intersectingWord = placementCell.prefixForDown.concat([placement], placementCell.suffixForDown);
+                        playedWords.push(intersectingWord.reduce((accum, current_value) => accum + current_value.tile.letter, ""));
                     }
                 }
             }
@@ -351,10 +353,10 @@ Playable letters down: ${cell.playableLettersDown}`);
         score += intersectingWordSum;
 		if (newPlacementCount == 7) score += 50;
 
-        console.log(`Played word ${placements.reduce((accum, current_value) => accum + current_value.tile.letter, "")}`);
-        playedWords.forEach((word) => {
-            console.log(`    ${word}`);
-        })
+        // console.log(`Played word ${placements.reduce((accum, current_value) => accum + current_value.tile.letter, "")}`);
+        // playedWords.forEach((word) => {
+        //     console.log(`    ${word}`);
+        // })
 
 		return score;
 	}
@@ -376,11 +378,11 @@ Playable letters down: ${cell.playableLettersDown}`);
                 if (nextCell) {
                     let remainingSuffixes = this.getSuffixesFromAnchor(nextCell, hand, direction, child, true);
                     remainingSuffixes.forEach((remainingSuffix) => {
-                        remainingSuffix.unshift(new TilePlacement(cell.tile!, cell.row, cell.column));
+                        remainingSuffix.unshift(new TilePlacement(cell.tile!, cell.row, cell.column, false));
                         suffixes.push(remainingSuffix);
                     });
-                } else {
-                    suffixes.push([new TilePlacement(cell.tile!, cell.row, cell.column)]);
+                } else if (child.hasChild(Node.EOW)) {
+                    suffixes.push([new TilePlacement(cell.tile!, cell.row, cell.column, false)]);
                 }
             // for empty cells, pick an appropriate tile from the hand
             } else if (cell.isEmpty() && cell.getPlayableLettersForDirection(direction).includes(child.letter)) {
@@ -389,7 +391,7 @@ Playable letters down: ${cell.playableLettersDown}`);
                         let remainingTiles = Tile.remove(hand, child.letter);
                         let remainingSuffixes = this.getSuffixesFromAnchor(nextCell, remainingTiles, direction, child, true);
                         remainingSuffixes.forEach((remainingSuffix) => {
-                            remainingSuffix.unshift(new TilePlacement(new Tile(child.letter), cell.row, cell.column));
+                            remainingSuffix.unshift(new TilePlacement(new Tile(child.letter), cell.row, cell.column, true));
                             suffixes.push(remainingSuffix);
                         });
                     } else if (Tile.containsBlank(hand)) {
@@ -398,18 +400,19 @@ Playable letters down: ${cell.playableLettersDown}`);
                         tile.setLetter(child.letter);
                         let remainingSuffixes = this.getSuffixesFromAnchor(nextCell, remainingTiles, direction, child, true);
                         remainingSuffixes.forEach((remainingSuffix) => {
-                            remainingSuffix.unshift(new TilePlacement(tile, cell.row, cell.column));
+                            remainingSuffix.unshift(new TilePlacement(tile, cell.row, cell.column, true));
                             suffixes.push(remainingSuffix);
                         });
                     }
                 } else {
-                    // we're at the edge of the board, so just return the current letter, if it exists
-                    if (Tile.contains(hand, child.letter)) {
-                        suffixes.push([new TilePlacement(new Tile(child.letter), cell.row, cell.column)]);
-                    } else if (Tile.containsBlank(hand)) {
+                    // we're at the edge of the board, so just return the current letter, if it exists in the given hand, and 
+                    // would form a complete word
+                    if (Tile.contains(hand, child.letter) && child.hasChild(Node.EOW)) {
+                        suffixes.push([new TilePlacement(new Tile(child.letter), cell.row, cell.column, true)]);
+                    } else if (Tile.containsBlank(hand) && child.hasChild(Node.EOW)) {
                         let tile: BlankTile = new BlankTile();
                         tile.setLetter(child.letter);
-                        suffixes.push([new TilePlacement(tile, cell.row, cell.column)]);
+                        suffixes.push([new TilePlacement(tile, cell.row, cell.column, true)]);
                     }
                 }
             }
@@ -429,7 +432,7 @@ Playable letters down: ${cell.playableLettersDown}`);
 		let words: Array<Array<TilePlacement>> = new Array<Array<TilePlacement>>();
 
         // Move down the Trie according to the letters in the prefix
-		let prefixLetters: Array<string> = Tile.toLetterList(cell.getPrefixForDirection(direction));
+		let prefixLetters: Array<string> = TilePlacement.toLetterList(cell.getPrefixForDirection(direction));
         let n: Node | null = this.trie.root;
 		while (prefixLetters.length > 0 && n != null) {
 			n = n.getChild(prefixLetters.shift()!);
@@ -444,12 +447,8 @@ Playable letters down: ${cell.playableLettersDown}`);
         // don't check for EOW marker on the first recursion, as we need to place a Tile in the 
         // anchor cell no matter what
         this.getSuffixesFromAnchor(cell, hand, direction, n, false).forEach((suffix) => {
-            let cellPrefix: Array<Tile> = cell.getPrefixForDirection(direction);
-            let prefixTiles: Array<TilePlacement> = direction === "ACROSS" ?
-                TilePlacement.getPlacements(cell.getPrefixForDirection(direction), cell.row, cell.column - cellPrefix.length, direction) :
-                TilePlacement.getPlacements(cell.getPrefixForDirection(direction), cell.row - cellPrefix.length, cell.column, direction);
-
-            words.push(prefixTiles.concat(suffix));
+            let cellPrefix: Array<TilePlacement> = cell.getPrefixForDirection(direction);
+            words.push(cellPrefix.concat(suffix));
         });
 
 		return words;
@@ -460,11 +459,9 @@ Playable letters down: ${cell.playableLettersDown}`);
         const startTime = performance.now();
 
         if (! this.wordsPlayed) {
-            console.log("Getting first move");
             return this.solver.getFirstMove(this, hand);
         }
 
-        console.log("Getting next move");
         let moves: Array<Move> = new Array<Move>();
 
         this.anchors.forEach((anchorCell) => {

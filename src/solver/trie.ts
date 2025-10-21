@@ -63,7 +63,7 @@ export class Trie {
 	}
 	
 	/** Calculate the set of valid letters that can be played between a given prefix and suffix */
-	getValidLettersFromPrefixandSuffix(prefix: Array<Tile>, suffix: Array<Tile>): Array<string> {
+	getValidLettersFromPrefixandSuffix(prefix: Array<string>, suffix: Array<string>): Array<string> {
 		let validLetters: Array<string> = new Array<string>();
 		let n: Node | null = this.root;
 		
@@ -75,7 +75,7 @@ export class Trie {
 			return validLetters;
 		}
 		
-		let prefixLetters: Array<string> = Tile.toLetterList(prefix);
+		let prefixLetters: Array<string> = prefix.slice();
 		while (prefixLetters.length > 0 && n != null) {
 			n = n.getChild(prefixLetters.shift()!);
 		}
@@ -98,7 +98,7 @@ export class Trie {
 			// for each child of the current node
 			n.childrenList.forEach((childNode) => {
 				// if the child is not the end-of-word marker, and it contains the suffix, add it
-				if (childNode.letter != Node.EOW && childNode.containsSuffix(Tile.toLetterList(suffix))) {
+				if (childNode.letter != Node.EOW && childNode.containsSuffix(suffix)) {
 					validLetters.push(childNode.letter);
 				}
 			});

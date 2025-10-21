@@ -9,6 +9,7 @@ import { DoubleWordCellType } from './game/celltype';
 import { TripleWordCellType } from './game/celltype';
 import { Move } from './game/move';
 import { BLANK, BlankTile, Tile } from './game/tile';
+import type { TilePlacement } from './game/tileplacement';
 
 let board = new Board();
 
@@ -18,6 +19,17 @@ function ScrabbleTile({tile}: {tile: Tile}) {
             <div className="bg-orange-300 text-gray-800 rounded w-12 h-12 flex items-center justify-center text-2xl font-bold relative">
                 {tile.letter}
                 { tile.points ? <sub className="text-sm absolute bottom-0 right-1">{tile.points}</sub> : null }
+            </div>
+        </>
+    );
+}
+
+function PlacementTile({placement}: {placement: TilePlacement}) {
+    return (
+        <>
+            <div className="bg-red-300 border-1 border-pink-500 text-gray-800 rounded w-12 h-12 flex items-center justify-center text-2xl font-bold relative">
+                {placement.tile.letter}
+                { placement.tile.points ? <sub className="text-sm absolute bottom-0 right-1">{placement.tile.points}</sub> : null }
             </div>
         </>
     );
@@ -48,6 +60,7 @@ function RackTile({tile, updateRackTile}: {tile: Tile | null, updateRackTile: (t
                     value={tile ? tile.letter : ''}
                     onChange={(e) => handleChangeLetter(e.target.value.toUpperCase())}
                     onFocus={(e) => e.target.select()}
+                    onBlur={() => setEditing(false)}
                     autoFocus
                 />
                 : tile ? <ScrabbleTile tile={tile} /> : '?'
@@ -77,8 +90,10 @@ function Rack({rackTiles, updateRackTile}: {rackTiles: Array<Tile | null>, updat
     )
 }
 
-function ScrabbleCell({cell, boardTile, updateBoardTile}: {cell: Cell, boardTile: Tile | null, updateBoardTile: (tile: Tile | null) => void}) {
+function ScrabbleCell({cell, boardTiles, updateBoardTile, showingMove}: {cell: Cell, boardSize: number, boardTiles: Array<Array<Tile | null>>, updateBoardTile: (tile: Tile | null) => void, showingMove: Move | null}) {
     const [editing, setEditing] = useState(false);
+    let boardTile: Tile | null = boardTiles[cell.row][cell.column];
+    let placement = showingMove && showingMove?.getPlacementAt(cell.row, cell.column);
 
     let populatedCellColor = "bg-orange-300";
     let cellColor = "bg-green-400";
@@ -104,7 +119,7 @@ function ScrabbleCell({cell, boardTile, updateBoardTile}: {cell: Cell, boardTile
 
     return (
         <div 
-            className={`${cellColor} size-12 flex items-center justify-center font-bold text-gray-800`}
+            className={`${cellColor} size-12 rounded flex items-center justify-center font-bold text-gray-800`}
             onClick={() => setEditing(!editing)}>
             { editing ?
                 <input
@@ -114,8 +129,10 @@ function ScrabbleCell({cell, boardTile, updateBoardTile}: {cell: Cell, boardTile
                     value={boardTile ? boardTile.letter : ''}
                     onChange={(e) => handleChangeLetter(e.target.value.toUpperCase())}
                     onFocus={(e) => e.target.select()}
+                    onBlur={() => setEditing(false)}
                     autoFocus
                 />
+                : placement && placement.isNew ? <PlacementTile placement={placement} />
                 : boardTile ? <ScrabbleTile tile={boardTile} /> : cell.cellType.toString()
             }
         </div>
@@ -130,14 +147,15 @@ function ScrabbleBoard({boardSize, boardTiles, updateBoardTile, showingMove}: {b
         for (let columnIndex = 0; columnIndex < boardSize; columnIndex++) {
             const boardCell = board.cells[rowIndex][columnIndex];
             const key = `${rowIndex}-${columnIndex}`;
-            const tileAt = showingMove && showingMove.getTileAt(rowIndex, columnIndex);
-            if (tileAt) {
-                cells.push(<ScrabbleTile key={key} tile={tileAt} />);
-            } else {
-                cells.push(
-                    <ScrabbleCell key={key} cell={boardCell} boardTile={boardTiles[rowIndex][columnIndex]} updateBoardTile={(tile: Tile | null) => updateBoardTile(rowIndex, columnIndex, tile)} />
-                );
-            }
+            cells.push(
+                <ScrabbleCell
+                    key={key}
+                    cell={boardCell}
+                    boardSize={boardSize}
+                    boardTiles={boardTiles}
+                    updateBoardTile={(tile: Tile | null) => updateBoardTile(rowIndex, columnIndex, tile)}
+                    showingMove={showingMove} />
+            );
         }
     }
 
@@ -186,7 +204,6 @@ function App() {
         setShowingMove(null);
         board.populate(boardTiles);
         board.calculateAnchorsAndPlayableLetters();
-        console.log(`${board}`);
 
         let hand: Array<Tile> = rackTiles.filter(l => l !== null);
         let foundMoves = board.getMove(hand);
