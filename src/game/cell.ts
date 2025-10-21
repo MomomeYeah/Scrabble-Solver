@@ -45,13 +45,12 @@ export class Cell {
 		return ! this.tile;
 	}
 	
-	placeTile(tile: Tile): number {
+	placeTile(tile: Tile): void {
         if (this.tile ) {
             throw new Error("Cell already has a tile");
         }
 
         this.tile = tile;
-        return tile.points * this.cellType.getTileMultiplier();
 	}
 
 	getPrefixForDirection(direction: PlayDirection): Array<TilePlacement> {

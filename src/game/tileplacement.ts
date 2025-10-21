@@ -1,5 +1,3 @@
-import type { PlayDirection } from "./board.ts";
-import { Board } from "./board.js";
 import { Cell } from "./cell.js";
 import { Tile } from "./tile.js";
 
@@ -30,23 +28,4 @@ export class TilePlacement {
 
 		return false;
     }
-
-	// TODO: always setting isNew to true here - can we get rid of this function?
-	static getPlacements(tiles: Array<Tile>, startingRow: number, startingColumn: number, direction: PlayDirection): Array<TilePlacement> {
-		let placements: Array<TilePlacement> = new Array<TilePlacement>();
-
-		let row: number = startingRow;
-		let column: number = startingColumn;
-        tiles.forEach((tile) => {
-            placements.push(new TilePlacement(tile, row, column, true));
-
-            if (direction == "ACROSS") {
-                column++;
-            } else {
-                row++;
-            }
-        });
-
-        return placements;
-	}
 }

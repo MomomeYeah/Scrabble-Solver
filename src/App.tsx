@@ -27,7 +27,7 @@ function ScrabbleTile({tile}: {tile: Tile}) {
 function PlacementTile({placement}: {placement: TilePlacement}) {
     return (
         <>
-            <div className="bg-red-300 border-1 border-pink-500 text-gray-800 rounded w-12 h-12 flex items-center justify-center text-2xl font-bold relative">
+            <div className="bg-red-300 ring-1 ring-pink-500 text-gray-800 rounded w-12 h-12 flex items-center justify-center text-2xl font-bold relative">
                 {placement.tile.letter}
                 { placement.tile.points ? <sub className="text-sm absolute bottom-0 right-1">{placement.tile.points}</sub> : null }
             </div>
@@ -139,8 +139,6 @@ function ScrabbleCell({cell, boardTiles, updateBoardTile, showingMove}: {cell: C
     )
 }
 
-// TODO is this right way to handle showing a ScrabbleTile in the case where a move is selected?
-// There is duplication in the Cell component when a letter is pre-entered
 function ScrabbleBoard({boardSize, boardTiles, updateBoardTile, showingMove}: {boardSize: number, boardTiles: Array<Array<Tile | null>>, updateBoardTile: (rowIndex: number, columnIndex: number, tile: Tile | null) => void, showingMove: Move | null}) {
     let cells = [];
     for (let rowIndex = 0; rowIndex < boardSize; rowIndex++) {
@@ -161,7 +159,7 @@ function ScrabbleBoard({boardSize, boardTiles, updateBoardTile, showingMove}: {b
 
     // It would be nice to use grid-cols-${boardSize} but tailwind will prune any styles it can't statically find
     return (
-        <div className="grid grid-cols-15 gap-0.5 aspect-square my-16 border-4 rounded-sm border-amber-800">
+        <div className="grid grid-cols-15 gap-1 aspect-square my-16 p-1 border-4 rounded border-pink-800">
             { cells }
         </div>
     )
@@ -171,7 +169,7 @@ function App() {
     const [boardSize] = useState(15);
     const [boardTiles, setBoardTiles] = useState<Array<Array<Tile | null>>>(Array(boardSize).fill(Array(boardSize).fill(null)));
     const [rackTiles, setRackTiles] = useState<Array<Tile | null>>(Array(7).fill(null));
-    const [moves, setMoves] = useState<Array<Move>>([]);
+    const [moves, setMoves] = useState<Array<Move>>(new Array<Move>());
     const [showingMove, setShowingMove] = useState<Move | null>(null);
 
     function updateBoardTile(rowIndex: number, columnIndex: number, tile: Tile | null) {
@@ -203,7 +201,6 @@ function App() {
     function handleClickSolve() {
         setShowingMove(null);
         board.populate(boardTiles);
-        board.calculateAnchorsAndPlayableLetters();
 
         let hand: Array<Tile> = rackTiles.filter(l => l !== null);
         let foundMoves = board.getMove(hand);
@@ -212,6 +209,22 @@ function App() {
 
     function handleShowMove(move: Move) {
         setShowingMove(move);
+    }
+
+    function handleAcceptMove(move: Move) {
+        // set the currently-showing move to null, and clear the set of suggested moves
+        setShowingMove(null);
+        setMoves(new Array<Move>());
+        
+        // place the move, and update the board
+        let newTiles: Array<Array<Tile | null>> = [];
+        boardTiles.forEach((row) => {
+            newTiles.push(row.slice());
+        })
+        move.placements.forEach((placement) => {
+            newTiles[placement.row][placement.column] = placement.tile;
+        });
+        setBoardTiles(newTiles);
     }
 
     return (
@@ -240,8 +253,11 @@ function App() {
                                     , starting from 
                                     ({move.placements[0].row}, {move.placements[0].column})
                                     ({move.score} points)
-                                    <button onClick={() => handleShowMove(move)} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-4 rounded-sm mb-2 ml-2">
+                                    <button onClick={() => handleShowMove(move)} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-4 rounded mb-2 ml-2">
                                         Show
+                                    </button>
+                                    <button onClick={() => handleAcceptMove(move)} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-4 rounded mb-2 ml-2">
+                                        Accept
                                     </button>
                                 </li>
                             )) }

@@ -8,7 +8,6 @@ import { TilePlacement } from './tileplacement';
 import { dictionary } from '../data/dictionary'
 import { Node } from '../solver/node';
 import { Trie } from '../solver/trie';
-import { Solver } from '../solver/solver';
 
 const PlayDirections = ["ACROSS", "DOWN"];
 export type PlayDirection = typeof PlayDirections[number];
@@ -38,7 +37,6 @@ export class Board {
 	anchors: Array<Cell>;
     dictionary: Set<string>;
 	trie: Trie;
-    solver: Solver;
 	
 	constructor() {
 		this.wordsPlayed = false;
@@ -78,9 +76,6 @@ export class Board {
         this.dictionary = new Set<string>(dictionaryLines);
         this.trie = new Trie();
         this.trie.load(dictionaryLines);
-
-        // initialise Solver
-        this.solver = new Solver();
 	}
 
     /** Fully reset the board, returning it to a pristine state. */
@@ -115,6 +110,8 @@ export class Board {
                 }
             });
         });
+
+        this.calculateAnchorsAndPlayableLetters();
     }
 
     toString(): string {
@@ -216,7 +213,7 @@ export class Board {
         let precedingNeighbour: Cell | null = this.getPrecedingNeighbour(cell, direction);
         
         while (precedingNeighbour !== null && ! precedingNeighbour.isEmpty()) {
-            prefixes.push(new TilePlacement(precedingNeighbour.tile!, cell.row, cell.column, false));
+            prefixes.push(new TilePlacement(precedingNeighbour.tile!, precedingNeighbour.row, precedingNeighbour.column, false));
             precedingNeighbour = this.getPrecedingNeighbour(precedingNeighbour, direction);
         }
 
@@ -250,8 +247,11 @@ export class Board {
      * This function assumes either that the board is empty, or that it has been populated via this.populate()
      */
     calculateAnchorsAndPlayableLetters(): void {
-        // If the board is empty, there are no anchors
+        // If no words have been played, the only anchor is the middle square. In this scenario, there are no 
+        // cross checks to worry about, as no words have been played yet
         if (! this.wordsPlayed) {
+            const centreSquareIndex = Math.floor(this.boardsize / 2);
+            this.anchors.push(this.cells[centreSquareIndex][centreSquareIndex]);
             return;
         }
 
@@ -457,10 +457,6 @@ export class Board {
     /** Calculate the best moves playable by the given hand. Move representations include tiles already on the board */
     getMove(hand: Array<Tile>): Array<Move> {
         const startTime = performance.now();
-
-        if (! this.wordsPlayed) {
-            return this.solver.getFirstMove(this, hand);
-        }
 
         let moves: Array<Move> = new Array<Move>();
 
