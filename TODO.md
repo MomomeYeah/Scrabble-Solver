@@ -1,26 +1,21 @@
+# UI Enhancements
+- Smoother experience when entering tiles on board / rack
+    - Automatically highlight next square?
+    - Arrow keys to change direction?
+- Use contexts + prop types and / or switch to Redux for state
+
+# Tests
+- All cross-words form valid words
+- Fix linting issues once tests implemented
+
+# Code Tidy-Up
 - Inconsistent use of cell.tile vs. cell.isEmpty
-- UI Enhancements
-    - clear visual distinction between existing and newly-placed tiles
-    - smoother experience when entering tiles on board / rack
-        - automatically highlight next square?
-        - arrow keys to change direction?
-    - smoother experience for entering multiple words in sequence
-        - accept suggested word and continue?
-    - use contexts + prop types
-    - Switch to Redux for state
-- Tests for solver
-    - words with a blank tile at edge of the board form a valid word
-    - words with an existing tile at edge of the board form a valid word
-    - all cross-words form valid words
-    - able to connect multiple fragment in one direction
-    - able to form words with existing prefix
-    - able to form words with no existing prefix
-    - able to place e.g. ACROSS words immediately above other ACROSS words
-- Code Tidy-Up
-    - Feels like it should be possible to condense solving functions somewhat
-    - Ensure naming is consistent and intuitive across the board
-    - Move generation currently will use a lettered Tile OR a blank, but it can't try both possibilities
-        - This may not be true - need to test
-    - Is there a nicer way of building words with no existing prefix, to avoid having to check that it crosses anchor?
+- Feels like it should be possible to condense solving functions somewhat
+- Ensure naming is consistent and intuitive across the board
+- Move generation currently will use a lettered Tile OR a blank, but it can't try both possibilities
+    - This may not be true - need to test
+- Is there a nicer way of building words with no existing prefix, to avoid having to check that it crosses anchor?
+
+# Functionality Enhancements
 - Fully solve final moves once bag is empty
 - Add validation at various points to make sure that e.g. moves place tiles in valid positions

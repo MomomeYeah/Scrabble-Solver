@@ -30,8 +30,11 @@ export class Trie {
     getAllWords(): Array<string> {
         return this.root.getSuffixes();
     }
-    
-    /** Calculate the set of valid letters that can be played between a given prefix and suffix */
+
+    /** Calculate the set of valid letters that can be played between a given prefix and suffix.
+     * 
+     * In order for a letter to be valid, the concatenated prefix, letter, and suffix must form a complete word.
+     */
     getValidLettersFromPrefixandSuffix(prefix: Array<string>, suffix: Array<string>): Array<string> {
         let validLetters: Array<string> = new Array<string>();
         let n: Node | null = this.root;

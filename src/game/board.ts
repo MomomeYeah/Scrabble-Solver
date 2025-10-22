@@ -313,8 +313,8 @@ export class Board {
             // calculate the number of points earned from placing this tile on this cell
 			const placementCell = this.cells[placement.row][placement.column];
 
-            if (! placementCell.isEmpty()) {
-                // if the cell is currently occupied, then this tile was already on the board
+            if (! placement.isNew) {
+                // if this is not a new placement, then this tile was already on the board
                 // only count the points, ignoring any tile multiplier
                 score += placement.tile.points;
             } else {
@@ -356,7 +356,7 @@ export class Board {
         // console.log(`Played word ${placements.reduce((accum, current_value) => accum + current_value.tile.letter, "")}`);
         // playedWords.forEach((word) => {
         //     console.log(`    ${word}`);
-        // })
+        // });
 
 		return score;
 	}
