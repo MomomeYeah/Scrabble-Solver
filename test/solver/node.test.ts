@@ -1,5 +1,5 @@
 import { expect, test, describe } from 'vitest'
-import { Node } from '../../src/solver/Node.js'
+import { Node } from '../../src/solver/node.js'
 
 describe('Node basic operations', () => {
     test.each(

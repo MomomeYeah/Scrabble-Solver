@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { Trie } from '../../src/solver/Trie.js'
+import { Trie } from '../../src/solver/trie.js'
 
 test('can add and retrieve word', () => {
     const testTrie = new Trie();
