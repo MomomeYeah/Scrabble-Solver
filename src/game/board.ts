@@ -9,6 +9,7 @@ import { dictionary } from '../data/dictionary'
 import { Node } from '../solver/node';
 import { Trie } from '../solver/trie';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const PlayDirections = ["ACROSS", "DOWN"];
 export type PlayDirection = typeof PlayDirections[number];
 
