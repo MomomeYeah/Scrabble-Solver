@@ -9,6 +9,7 @@ import { dictionary } from '../data/dictionary'
 import { Node } from '../solver/node';
 import { Trie } from '../solver/trie';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const PlayDirections = ["ACROSS", "DOWN"];
 export type PlayDirection = typeof PlayDirections[number];
 
@@ -44,9 +45,9 @@ export class Board {
 		this.anchors = new Array<Cell>();
 	
         // initialise board
-        let initialBoardLines = initialBoard.trim().split('\n');
+        const initialBoardLines = initialBoard.trim().split('\n');
         initialBoardLines.forEach((line, row) => {
-            let boardCells = line.split(',');
+            const boardCells = line.split(',');
             this.cells[row] = new Array<Cell>();
             boardCells.forEach((cellTypeString, column) => {
                 let cellType: CellType;
@@ -72,7 +73,7 @@ export class Board {
         });
 
         // initialise Trie
-        let dictionaryLines: Array<string> = dictionary.split('\n');
+        const dictionaryLines: Array<string> = dictionary.split('\n');
         this.dictionary = new Set<string>(dictionaryLines);
         this.trie = new Trie();
         this.trie.load(dictionaryLines);
@@ -192,7 +193,7 @@ export class Board {
      */
     /** For a given cell, calculate the set of preceding empty non-anchor cells for a given direction */
     getEmptyPrefixForDirection(cell: Cell, direction: PlayDirection): Array<Cell> {
-        let prefixCells: Array<Cell> = new Array<Cell>();
+        const prefixCells: Array<Cell> = new Array<Cell>();
         let precedingNeighbour: Cell | null = this.getPrecedingNeighbour(cell, direction);
         
         while (precedingNeighbour !== null && precedingNeighbour.isEmpty() && ! precedingNeighbour.isAnchor) {
@@ -209,7 +210,7 @@ export class Board {
      * given cell (for ACROSS words), or above the given cell (for DOWN words)
      */
     getPrefixForDirection(cell: Cell, direction: PlayDirection): Array<TilePlacement> {
-        let prefixes: Array<TilePlacement> = new Array<TilePlacement>();
+        const prefixes: Array<TilePlacement> = new Array<TilePlacement>();
         let precedingNeighbour: Cell | null = this.getPrecedingNeighbour(cell, direction);
         
         while (precedingNeighbour !== null && ! precedingNeighbour.isEmpty()) {
@@ -227,7 +228,7 @@ export class Board {
      * given cell (for ACROSS words), or below the given cell (for DOWN words)
      */
     getSuffixForDirection(cell: Cell, direction: PlayDirection): Array<TilePlacement> {
-        let suffixes: Array<TilePlacement> = new Array<TilePlacement>();
+        const suffixes: Array<TilePlacement> = new Array<TilePlacement>();
         let followingNeighbour: Cell | null = this.getFollowingNeighbour(cell, direction);
         
         while (followingNeighbour !== null && ! followingNeighbour.isEmpty()) {
@@ -302,7 +303,7 @@ export class Board {
 	
     /** Calculate the score represented by a set of tile placements, including all intersecting words */
 	getScore(placements: Array<TilePlacement>, direction: PlayDirection): number {
-        let playedWords: Array<string> = new Array<string>();
+        const playedWords: Array<string> = new Array<string>();
         playedWords.push(placements.reduce((accum, current_value) => accum + current_value.tile.letter, ""));
 
 		let score: number = 0;
@@ -330,17 +331,17 @@ export class Board {
                 // with those tiles, multiply by this cell's word multiplier (if any), and add to the score
                 let intersectingWord: Array<TilePlacement> = new Array<TilePlacement>();
                 if (direction === "ACROSS") {
-                    let scoreOfIntersectingTiles = placementCell.getPrefixAndSuffixSum("DOWN");
+                    const scoreOfIntersectingTiles = placementCell.getPrefixAndSuffixSum("DOWN");
                     if (scoreOfIntersectingTiles) {
-                        let intersectingWordScore = (placementScore + scoreOfIntersectingTiles) * placementCell.cellType.getWordMultiplier();
+                        const intersectingWordScore = (placementScore + scoreOfIntersectingTiles) * placementCell.cellType.getWordMultiplier();
                         intersectingWordSum += intersectingWordScore;
                         intersectingWord = placementCell.prefixForDown.concat([placement], placementCell.suffixForDown);
                         playedWords.push(intersectingWord.reduce((accum, current_value) => accum + current_value.tile.letter, ""));
                     }
                 } else {
-                    let scoreOfIntersectingTiles = placementCell.getPrefixAndSuffixSum("ACROSS");
+                    const scoreOfIntersectingTiles = placementCell.getPrefixAndSuffixSum("ACROSS");
                     if (scoreOfIntersectingTiles) {
-                        let intersectingWordScore = (placementScore + scoreOfIntersectingTiles) * placementCell.cellType.getWordMultiplier();
+                        const intersectingWordScore = (placementScore + scoreOfIntersectingTiles) * placementCell.cellType.getWordMultiplier();
                         intersectingWordSum += intersectingWordScore;
                         intersectingWord = placementCell.prefixForDown.concat([placement], placementCell.suffixForDown);
                         playedWords.push(intersectingWord.reduce((accum, current_value) => accum + current_value.tile.letter, ""));
@@ -363,9 +364,9 @@ export class Board {
 
     /** Calculate the set of valid suffixes from a given cell, given a Trie node representing a (possibly empty) prefix */
     getSuffixesFromAnchor(cell: Cell, hand: Array<Tile>, direction: PlayDirection, fromNode: Node, includeEOW: boolean): Array<Array<TilePlacement>> {
-        let suffixes: Array<Array<TilePlacement>> = new Array<Array<TilePlacement>>();
+        const suffixes: Array<Array<TilePlacement>> = new Array<Array<TilePlacement>>();
 
-        let nextCell = this.getFollowingNeighbour(cell, direction);
+        const nextCell = this.getFollowingNeighbour(cell, direction);
         fromNode.childrenList.forEach((child) => {
             // for EOW markers, make sure we are at an empty cell (meaning there is no more suffix to calculate), or
             // that we're at the edge of the board
@@ -376,7 +377,7 @@ export class Board {
             // for non-empty cells, use the Tile that is already there to continue generating the suffix
             } else if (! cell.isEmpty() && child.letter === cell.tile!.letter) {
                 if (nextCell) {
-                    let remainingSuffixes = this.getSuffixesFromAnchor(nextCell, hand, direction, child, true);
+                    const remainingSuffixes = this.getSuffixesFromAnchor(nextCell, hand, direction, child, true);
                     remainingSuffixes.forEach((remainingSuffix) => {
                         remainingSuffix.unshift(new TilePlacement(cell.tile!, cell.row, cell.column, false));
                         suffixes.push(remainingSuffix);
@@ -388,17 +389,17 @@ export class Board {
             } else if (cell.isEmpty() && cell.getPlayableLettersForDirection(direction).includes(child.letter)) {
                 if (nextCell) {
                     if (Tile.contains(hand, child.letter)) {
-                        let remainingTiles = Tile.remove(hand, child.letter);
-                        let remainingSuffixes = this.getSuffixesFromAnchor(nextCell, remainingTiles, direction, child, true);
+                        const remainingTiles = Tile.remove(hand, child.letter);
+                        const remainingSuffixes = this.getSuffixesFromAnchor(nextCell, remainingTiles, direction, child, true);
                         remainingSuffixes.forEach((remainingSuffix) => {
                             remainingSuffix.unshift(new TilePlacement(new Tile(child.letter), cell.row, cell.column, true));
                             suffixes.push(remainingSuffix);
                         });
                     } else if (Tile.containsBlank(hand)) {
-                        let remainingTiles = Tile.removeBlank(hand);
-                        let tile: BlankTile = new BlankTile();
+                        const remainingTiles = Tile.removeBlank(hand);
+                        const tile: BlankTile = new BlankTile();
                         tile.setLetter(child.letter);
-                        let remainingSuffixes = this.getSuffixesFromAnchor(nextCell, remainingTiles, direction, child, true);
+                        const remainingSuffixes = this.getSuffixesFromAnchor(nextCell, remainingTiles, direction, child, true);
                         remainingSuffixes.forEach((remainingSuffix) => {
                             remainingSuffix.unshift(new TilePlacement(tile, cell.row, cell.column, true));
                             suffixes.push(remainingSuffix);
@@ -410,7 +411,7 @@ export class Board {
                     if (Tile.contains(hand, child.letter) && child.hasChild(Node.EOW)) {
                         suffixes.push([new TilePlacement(new Tile(child.letter), cell.row, cell.column, true)]);
                     } else if (Tile.containsBlank(hand) && child.hasChild(Node.EOW)) {
-                        let tile: BlankTile = new BlankTile();
+                        const tile: BlankTile = new BlankTile();
                         tile.setLetter(child.letter);
                         suffixes.push([new TilePlacement(tile, cell.row, cell.column, true)]);
                     }
@@ -429,10 +430,10 @@ export class Board {
      * - words with no existing prefix that start from the anchor cell
      */
 	getWordsPlayableAtPrefixedCell(cell: Cell, hand: Array<Tile>, direction: PlayDirection): Array<Array<TilePlacement>> {
-		let words: Array<Array<TilePlacement>> = new Array<Array<TilePlacement>>();
+		const words: Array<Array<TilePlacement>> = new Array<Array<TilePlacement>>();
 
         // Move down the Trie according to the letters in the prefix
-		let prefixLetters: Array<string> = TilePlacement.toLetterList(cell.getPrefixForDirection(direction));
+		const prefixLetters: Array<string> = TilePlacement.toLetterList(cell.getPrefixForDirection(direction));
         let n: Node | null = this.trie.root;
 		while (prefixLetters.length > 0 && n != null) {
 			n = n.getChild(prefixLetters.shift()!);
@@ -447,7 +448,7 @@ export class Board {
         // don't check for EOW marker on the first recursion, as we need to place a Tile in the 
         // anchor cell no matter what
         this.getSuffixesFromAnchor(cell, hand, direction, n, false).forEach((suffix) => {
-            let cellPrefix: Array<TilePlacement> = cell.getPrefixForDirection(direction);
+            const cellPrefix: Array<TilePlacement> = cell.getPrefixForDirection(direction);
             words.push(cellPrefix.concat(suffix));
         });
 
@@ -458,14 +459,14 @@ export class Board {
     getMove(hand: Array<Tile>): Array<Move> {
         const startTime = performance.now();
 
-        let moves: Array<Move> = new Array<Move>();
+        const moves: Array<Move> = new Array<Move>();
 
         this.anchors.forEach((anchorCell) => {
             ["ACROSS", "DOWN"].forEach((direction) => {
                 // if the anchor cell has an already-placed prefix, find all words starting with that prefix and crossing 
                 // the anchor square
                 if (anchorCell.getPrefixForDirection(direction).length) {
-                    let words: Array<Array<TilePlacement>> = this.getWordsPlayableAtPrefixedCell(anchorCell, hand, direction);
+                    const words: Array<Array<TilePlacement>> = this.getWordsPlayableAtPrefixedCell(anchorCell, hand, direction);
                     words.forEach((word) => {
                         moves.push(new Move(word, direction, this.getScore(word, direction)));
                     });
@@ -473,13 +474,13 @@ export class Board {
                     // if the anchor cell does not have a prefix, then for each empty non-anchor cell preceding it, build
                     // all possible words, taking into account tiles already on the board. For each word, make sure that it 
                     // crosses the anchor square
-                    let emptyPrefix: Array<Cell> = this.getEmptyPrefixForDirection(anchorCell, direction);
+                    const emptyPrefix: Array<Cell> = this.getEmptyPrefixForDirection(anchorCell, direction);
                     
                     // we also want to generate words starting from the anchor itself, so add that to the empty prefix
                     emptyPrefix.unshift(anchorCell);
 
                     emptyPrefix.forEach((prefixCell) => {
-                        let words: Array<Array<TilePlacement>> = this.getWordsPlayableAtPrefixedCell(prefixCell, hand, direction);
+                        const words: Array<Array<TilePlacement>> = this.getWordsPlayableAtPrefixedCell(prefixCell, hand, direction);
                         words.forEach((word) => {
                             if (TilePlacement.coversCell(word, anchorCell)) {
                                 moves.push(new Move(word, direction, this.getScore(word, direction)));
@@ -491,10 +492,10 @@ export class Board {
         });
 
         const endTime = performance.now();
-        let searchTimeMS = (endTime - startTime).toFixed(2);
+        const searchTimeMS = (endTime - startTime).toFixed(2);
         console.log(`Found ${moves.length} moves in ${searchTimeMS}ms`);
 
-        let sortedMoves: Array<Move> = moves.slice().sort((a: Move, b: Move) => {return b.score - a.score;}).slice(0, 10);
+        const sortedMoves: Array<Move> = moves.slice().sort((a: Move, b: Move) => {return b.score - a.score;}).slice(0, 10);
         return sortedMoves;
     }
 }

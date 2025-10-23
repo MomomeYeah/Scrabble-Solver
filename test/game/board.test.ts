@@ -146,7 +146,6 @@ describe('Board basic behaviours', () => {
 
     test('getScore applies double letter multiplier correctly for new word', () => {
         const board = new Board();
-        const tiles = emptyTilesGrid();
 
         // place new tiles to form 'KAK' across
         const placements = [
@@ -180,7 +179,6 @@ describe('Board basic behaviours', () => {
 
     test('getScore applies triple word multiplier correctly for new word', () => {
         const board = new Board();
-        const tiles = emptyTilesGrid();
 
         // place new tiles to form 'KAK' across
         const placements = [
@@ -333,7 +331,7 @@ describe('Board move generation (getMove) scenarios', () => {
         const hand = [new Tile('A'), new Tile('T')];
         // anchor cell after the existing prefix is at column 8
         const moves = board.getMove(hand);
-        let candidateWords = moves.map((move) => TilePlacement.toLetterList(move.placements).join(''));
+        const candidateWords = moves.map((move) => TilePlacement.toLetterList(move.placements).join(''));
         expect(candidateWords).toContain('HEAT');
     });
 
@@ -347,7 +345,7 @@ describe('Board move generation (getMove) scenarios', () => {
         const hand = [new Tile('C'), new Tile('H')];
         // anchor cell after the existing prefix is at column 6
         const moves = board.getMove(hand);
-        let candidateWords = moves.map((move) => TilePlacement.toLetterList(move.placements).join(''));
+        const candidateWords = moves.map((move) => TilePlacement.toLetterList(move.placements).join(''));
         expect(candidateWords).toContain('CHEAT');
     });
 });

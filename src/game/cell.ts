@@ -72,13 +72,13 @@ export class Cell {
 	/** Get the sum of the points of all tiles in the directional prefix and suffix in a given direction */
 	getPrefixAndSuffixSum(direction: PlayDirection): number {
 		if (direction === "ACROSS") {
-			let prefixSum: number = this.prefixForAcross.reduce((accum, current_value) => accum + current_value.tile.points, 0);
-			let suffixSum: number = this.suffixForAcross.reduce((accum, current_value) => accum + current_value.tile.points, 0);
+			const prefixSum: number = this.prefixForAcross.reduce((accum, current_value) => accum + current_value.tile.points, 0);
+			const suffixSum: number = this.suffixForAcross.reduce((accum, current_value) => accum + current_value.tile.points, 0);
 
 			return prefixSum + suffixSum;
 		} else {
-			let prefixSum: number = this.prefixForDown.reduce((accum, current_value) => accum + current_value.tile.points, 0);
-			let suffixSum: number = this.suffixForDown.reduce((accum, current_value) => accum + current_value.tile.points, 0);
+			const prefixSum: number = this.prefixForDown.reduce((accum, current_value) => accum + current_value.tile.points, 0);
+			const suffixSum: number = this.suffixForDown.reduce((accum, current_value) => accum + current_value.tile.points, 0);
 
 			return prefixSum + suffixSum;
 		}

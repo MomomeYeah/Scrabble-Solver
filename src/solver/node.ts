@@ -34,7 +34,7 @@ export class Node {
 	
 	addChild(child: string): Node {
 		if (! this.hasChild(child)) {
-			let n: Node = new Node(child);
+			const n: Node = new Node(child);
 			this.childrenMap.set(child, n);
 			this.childrenList.push(n);
 			return n;
@@ -44,6 +44,7 @@ export class Node {
 	}
 	
     containsSuffix(suffix: Array<string>): boolean {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
 		let n: Node = this;
         for (const char of suffix) {
             if (! n.hasChild(char)) return false;
@@ -55,7 +56,7 @@ export class Node {
 
     /** Get all suffixes from this node */
     getSuffixes(): Array<string> {
-        let suffixes: Array<string> = new Array<string>();
+        const suffixes: Array<string> = new Array<string>();
 
         // for each child of the current node
         this.childrenList.forEach((childNode) => {
@@ -64,8 +65,7 @@ export class Node {
                 suffixes.push("");
             // otherwise, prepend this node's letter with all child suffixes
             } else {
-                let recSuffixes: Array<string> = childNode.getSuffixes();
-                recSuffixes.forEach((s) => {
+                childNode.getSuffixes().forEach((s) => {
                     suffixes.push(childNode.letter + s);
                 });
             }

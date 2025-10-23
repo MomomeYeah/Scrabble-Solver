@@ -36,7 +36,7 @@ export class Trie {
      * In order for a letter to be valid, the concatenated prefix, letter, and suffix must form a complete word.
      */
     getValidLettersFromPrefixandSuffix(prefix: Array<string>, suffix: Array<string>): Array<string> {
-        let validLetters: Array<string> = new Array<string>();
+        const validLetters: Array<string> = new Array<string>();
         let n: Node | null = this.root;
         
         // if there is no prefix or suffix, any letter is valid
@@ -47,7 +47,7 @@ export class Trie {
             return validLetters;
         }
         
-        let prefixLetters: Array<string> = prefix.slice();
+        const prefixLetters: Array<string> = prefix.slice();
         while (prefixLetters.length > 0 && n != null) {
             n = n.getChild(prefixLetters.shift()!);
         }

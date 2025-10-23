@@ -5,8 +5,8 @@
 - Use contexts + prop types and / or switch to Redux for state
 
 # Tests
+- Investigate somewhat-slow board tests (~500ms per test)
 - All cross-words form valid words
-- Fix linting issues once tests implemented
 
 # Code Tidy-Up
 - Inconsistent use of cell.tile vs. cell.isEmpty

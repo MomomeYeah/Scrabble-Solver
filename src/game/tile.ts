@@ -58,7 +58,7 @@ export class Tile {
     /** Remove at most one instance of the given letter from the set of tiles */
     static remove(tiles: Array<Tile>, letter: string): Array<Tile> {
         let found: boolean = false;
-        let newTiles = new Array<Tile>();
+        const newTiles = new Array<Tile>();
 
         tiles.forEach((tile) => {
             if (tile.letter !== letter || found) newTiles.push(tile);
@@ -71,7 +71,7 @@ export class Tile {
     /** Remove at most one blank from the set of tiles */
     static removeBlank(tiles: Array<Tile>): Array<Tile> {
         let found: boolean = false;
-        let newTiles = new Array<Tile>();
+        const newTiles = new Array<Tile>();
 
         tiles.forEach((tile) => {
             if (! (tile instanceof BlankTile) || found) newTiles.push(tile);

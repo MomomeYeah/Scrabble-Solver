@@ -11,7 +11,7 @@ import { Move } from './game/move';
 import { BLANK, BlankTile, Tile } from './game/tile';
 import type { TilePlacement } from './game/tileplacement';
 
-let board = new Board();
+const board = new Board();
 
 function ScrabbleTile({tile}: {tile: Tile}) {
     return (
@@ -70,7 +70,7 @@ function RackTile({tile, updateRackTile}: {tile: Tile | null, updateRackTile: (t
 }
 
 function Rack({rackTiles, updateRackTile}: {rackTiles: Array<Tile | null>, updateRackTile: (index: number, tile: Tile | null) => void}) {
-    let tiles = [];
+    const tiles = [];
     for (let i = 0; i < 7; i++) {
         tiles.push(
             <RackTile 
@@ -92,10 +92,10 @@ function Rack({rackTiles, updateRackTile}: {rackTiles: Array<Tile | null>, updat
 
 function ScrabbleCell({cell, boardTiles, updateBoardTile, showingMove}: {cell: Cell, boardSize: number, boardTiles: Array<Array<Tile | null>>, updateBoardTile: (tile: Tile | null) => void, showingMove: Move | null}) {
     const [editing, setEditing] = useState(false);
-    let boardTile: Tile | null = boardTiles[cell.row][cell.column];
-    let placement = showingMove && showingMove?.getPlacementAt(cell.row, cell.column);
+    const boardTile: Tile | null = boardTiles[cell.row][cell.column];
+    const placement = showingMove && showingMove?.getPlacementAt(cell.row, cell.column);
 
-    let populatedCellColor = "bg-orange-300";
+    const populatedCellColor = "bg-orange-300";
     let cellColor = "bg-green-400";
     if (cell.cellType instanceof DoubleLetterCellType) {
         cellColor = "bg-blue-300";
@@ -140,7 +140,7 @@ function ScrabbleCell({cell, boardTiles, updateBoardTile, showingMove}: {cell: C
 }
 
 function ScrabbleBoard({boardSize, boardTiles, updateBoardTile, showingMove}: {boardSize: number, boardTiles: Array<Array<Tile | null>>, updateBoardTile: (rowIndex: number, columnIndex: number, tile: Tile | null) => void, showingMove: Move | null}) {
-    let cells = [];
+    const cells = [];
     for (let rowIndex = 0; rowIndex < boardSize; rowIndex++) {
         for (let columnIndex = 0; columnIndex < boardSize; columnIndex++) {
             const boardCell = board.cells[rowIndex][columnIndex];
@@ -173,7 +173,7 @@ function App() {
     const [showingMove, setShowingMove] = useState<Move | null>(null);
 
     function updateBoardTile(rowIndex: number, columnIndex: number, tile: Tile | null) {
-        let newTiles: Array<Array<Tile | null>> = [];
+        const newTiles: Array<Array<Tile | null>> = [];
         boardTiles.forEach((row) => {
             newTiles.push(row.slice());
         })
@@ -182,7 +182,7 @@ function App() {
     }
 
     function updateRackTile(index: number, tile: Tile | null) {
-        let newTiles: Array<Tile | null> = rackTiles.slice();
+        const newTiles: Array<Tile | null> = rackTiles.slice();
         newTiles[index] = tile;
         setRackTiles(newTiles);
     }
@@ -202,8 +202,8 @@ function App() {
         setShowingMove(null);
         board.populate(boardTiles);
 
-        let hand: Array<Tile> = rackTiles.filter(l => l !== null);
-        let foundMoves = board.getMove(hand);
+        const hand: Array<Tile> = rackTiles.filter(l => l !== null);
+        const foundMoves = board.getMove(hand);
         setMoves(foundMoves);
     }
 
@@ -217,7 +217,7 @@ function App() {
         setMoves(new Array<Move>());
         
         // place the move, and update the board
-        let newTiles: Array<Array<Tile | null>> = [];
+        const newTiles: Array<Array<Tile | null>> = [];
         boardTiles.forEach((row) => {
             newTiles.push(row.slice());
         })
