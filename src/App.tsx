@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { createContext, useContext, useState } from 'react'
 import './App.css'
 
 import { Board } from './game/board';
@@ -11,7 +11,11 @@ import { Move } from './game/move';
 import { BLANK, BlankTile, Tile } from './game/tile';
 import type { TilePlacement } from './game/tileplacement';
 
-const board = new Board();
+type BoardContextProps = {
+    board: Board,
+    showingMove: Move | null
+}
+const BoardContext = createContext({} as BoardContextProps);
 
 function ScrabbleTile({tile}: {tile: Tile}) {
     return (
@@ -35,7 +39,11 @@ function PlacementTile({placement}: {placement: TilePlacement}) {
     );
 }
 
-function RackTile({tile, updateRackTile}: {tile: Tile | null, updateRackTile: (tile: Tile | null) => void}) {
+type RackTileProps = {
+    tile: Tile | null,
+    updateRackTile: (tile: Tile | null) => void
+}
+function RackTile({tile, updateRackTile}: RackTileProps) {
     const [editing, setEditing] = useState(false);
 
     function handleChangeLetter(newLetter: string) {
@@ -69,7 +77,11 @@ function RackTile({tile, updateRackTile}: {tile: Tile | null, updateRackTile: (t
     )
 }
 
-function Rack({rackTiles, updateRackTile}: {rackTiles: Array<Tile | null>, updateRackTile: (index: number, tile: Tile | null) => void}) {
+type RackProps = {
+    rackTiles: Array<Tile | null>,
+    updateRackTile: (index: number, tile: Tile | null) => void
+}
+function Rack({rackTiles, updateRackTile}: RackProps) {
     const tiles = [];
     for (let i = 0; i < 7; i++) {
         tiles.push(
@@ -90,10 +102,16 @@ function Rack({rackTiles, updateRackTile}: {rackTiles: Array<Tile | null>, updat
     )
 }
 
-function ScrabbleCell({cell, boardTiles, updateBoardTile, showingMove}: {cell: Cell, boardSize: number, boardTiles: Array<Array<Tile | null>>, updateBoardTile: (tile: Tile | null) => void, showingMove: Move | null}) {
+type ScrabbleCellProps = {
+    cell: Cell,
+    tile: Tile | null
+    updateBoardTile: (tile: Tile | null) => void
+}
+function ScrabbleCell({cell, tile, updateBoardTile}: ScrabbleCellProps) {
+    const context = useContext(BoardContext);
+
     const [editing, setEditing] = useState(false);
-    const boardTile: Tile | null = boardTiles[cell.row][cell.column];
-    const placement = showingMove && showingMove?.getPlacementAt(cell.row, cell.column);
+    const placement = context.showingMove && context.showingMove?.getPlacementAt(cell.row, cell.column);
 
     const populatedCellColor = "bg-orange-300";
     let cellColor = "bg-green-400";
@@ -126,33 +144,36 @@ function ScrabbleCell({cell, boardTiles, updateBoardTile, showingMove}: {cell: C
                     type="text"
                     maxLength={1}
                     className={`w-full h-full text-center text-2xl ${populatedCellColor}`}
-                    value={boardTile ? boardTile.letter : ''}
+                    value={tile ? tile.letter : ''}
                     onChange={(e) => handleChangeLetter(e.target.value.toUpperCase())}
                     onFocus={(e) => e.target.select()}
                     onBlur={() => setEditing(false)}
                     autoFocus
                 />
                 : placement && placement.isNew ? <PlacementTile placement={placement} />
-                : boardTile ? <ScrabbleTile tile={boardTile} /> : cell.cellType.toString()
+                : tile ? <ScrabbleTile tile={tile} /> : cell.cellType.toString()
             }
         </div>
     )
 }
 
-function ScrabbleBoard({boardSize, boardTiles, updateBoardTile, showingMove}: {boardSize: number, boardTiles: Array<Array<Tile | null>>, updateBoardTile: (rowIndex: number, columnIndex: number, tile: Tile | null) => void, showingMove: Move | null}) {
+type ScrabbleBoardProps = {
+    boardTiles: Array<Array<Tile | null>>,
+    updateBoardTile: (rowIndex: number, columnIndex: number, tile: Tile | null) => void
+}
+function ScrabbleBoard({boardTiles, updateBoardTile}: ScrabbleBoardProps) {
+    const context = useContext(BoardContext);
+
     const cells = [];
-    for (let rowIndex = 0; rowIndex < boardSize; rowIndex++) {
-        for (let columnIndex = 0; columnIndex < boardSize; columnIndex++) {
-            const boardCell = board.cells[rowIndex][columnIndex];
+    for (let rowIndex = 0; rowIndex < context.board.boardSize; rowIndex++) {
+        for (let columnIndex = 0; columnIndex < context.board.boardSize; columnIndex++) {
             const key = `${rowIndex}-${columnIndex}`;
             cells.push(
                 <ScrabbleCell
                     key={key}
-                    cell={boardCell}
-                    boardSize={boardSize}
-                    boardTiles={boardTiles}
-                    updateBoardTile={(tile: Tile | null) => updateBoardTile(rowIndex, columnIndex, tile)}
-                    showingMove={showingMove} />
+                    cell={context.board.cells[rowIndex][columnIndex]}
+                    tile={boardTiles[rowIndex][columnIndex]}
+                    updateBoardTile={(tile: Tile | null) => updateBoardTile(rowIndex, columnIndex, tile)} />
             );
         }
     }
@@ -166,7 +187,9 @@ function ScrabbleBoard({boardSize, boardTiles, updateBoardTile, showingMove}: {b
 }
 
 function App() {
-    const [boardSize] = useState(15);
+    const [board] = useState<Board>(() => new Board());
+    const [boardSize] = useState<number>(board.boardSize);
+
     const [boardTiles, setBoardTiles] = useState<Array<Array<Tile | null>>>(Array(boardSize).fill(Array(boardSize).fill(null)));
     const [rackTiles, setRackTiles] = useState<Array<Tile | null>>(Array(7).fill(null));
     const [moves, setMoves] = useState<Array<Move>>(new Array<Move>());
@@ -229,7 +252,9 @@ function App() {
 
     return (
         <>
-            <ScrabbleBoard boardSize={boardSize} boardTiles={boardTiles} updateBoardTile={updateBoardTile} showingMove={showingMove} />
+            <BoardContext.Provider value={{ board, showingMove }}>
+                <ScrabbleBoard boardTiles={boardTiles} updateBoardTile={updateBoardTile} />
+            </BoardContext.Provider>
             <Rack rackTiles={rackTiles} updateRackTile={updateRackTile} />
             <div className="flex justify-center mt-8">
                 <button onClick={handleClickSolve} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mb-16 mr-2">

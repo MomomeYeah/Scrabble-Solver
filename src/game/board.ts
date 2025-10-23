@@ -9,7 +9,6 @@ import { dictionary } from '../data/dictionary'
 import { Node } from '../solver/node';
 import { Trie } from '../solver/trie';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const PlayDirections = ["ACROSS", "DOWN"];
 export type PlayDirection = typeof PlayDirections[number];
 
@@ -31,8 +30,8 @@ DL,  ,  ,DW,  ,  ,  ,DL,  ,  ,  ,DW,  ,  ,DL
 TW,  ,  ,DL,  ,  ,  ,TW,  ,  ,  ,DL,  ,  ,TW`;
 
 export class Board {
-	
-	boardsize: number = 15;
+
+    boardSize: number = 15;
 	wordsPlayed: boolean;
 	cells: Array<Array<Cell>>;
 	anchors: Array<Cell>;
@@ -40,7 +39,7 @@ export class Board {
 	trie: Trie;
 	
 	constructor() {
-		this.wordsPlayed = false;
+        this.wordsPlayed = false;
 		this.cells = new Array<Array<Cell>>();
 		this.anchors = new Array<Cell>();
 	
@@ -134,7 +133,7 @@ export class Board {
 	}
 	
     inBounds(row: number, column: number): boolean {
-		if (row < 0 || row >= this.boardsize || column < 0 || column >= this.boardsize) {
+		if (row < 0 || row >= this.boardSize || column < 0 || column >= this.boardSize) {
 			return false;
 		}
 		return true;
@@ -174,9 +173,9 @@ export class Board {
 
     /** Get the right or bottom neighbour of the given cell, if any, depending on the given direction */
     getFollowingNeighbour(cell: Cell, direction: PlayDirection): Cell | null {
-        if (direction === "ACROSS" && cell.column < this.boardsize - 1) {
+        if (direction === "ACROSS" && cell.column < this.boardSize - 1) {
             return this.cells[cell.row][cell.column + 1];
-        } else if (direction === "DOWN" && cell.row < this.boardsize - 1) {
+        } else if (direction === "DOWN" && cell.row < this.boardSize - 1) {
             return this.cells[cell.row + 1][cell.column];
         }
 
@@ -251,7 +250,7 @@ export class Board {
         // If no words have been played, the only anchor is the middle square. In this scenario, there are no 
         // cross checks to worry about, as no words have been played yet
         if (! this.wordsPlayed) {
-            const centreSquareIndex = Math.floor(this.boardsize / 2);
+            const centreSquareIndex = Math.floor(this.boardSize / 2);
             this.anchors.push(this.cells[centreSquareIndex][centreSquareIndex]);
             return;
         }
