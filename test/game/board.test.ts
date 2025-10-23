@@ -1,8 +1,8 @@
 import { expect, test, describe } from 'vitest'
-import { Board } from '../src/game/board.js'
-import { Tile, BlankTile } from '../src/game/tile.js'
-import { TilePlacement } from '../src/game/tileplacement.js'
-import { BaseCellType } from '../src/game/celltype.js'
+import { Board } from '../../src/game/board.js'
+import { Tile, BlankTile } from '../../src/game/tile.js'
+import { TilePlacement } from '../../src/game/tileplacement.js'
+import { BaseCellType } from '../../src/game/celltype.js'
 
 // Helper to create an empty board
 function emptyTilesGrid() {
