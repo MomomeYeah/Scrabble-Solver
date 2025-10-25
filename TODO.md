@@ -2,16 +2,18 @@
 - Smoother experience when entering tiles on board / rack
     - Automatically highlight next square?
     - Arrow keys to change direction?
+- Currently not possible to enter a blank tile with a letter set
+- Show history of moves and rack contents
+    - May need to put boardTiles back into App.tsx
+    - We probably don't care about individual letter entries - maybe just take a snapshot of board state on solve?
+- Enhance getMove() to allow showing "top N" moves, where N is specified via UI
+- Debug via UI
+    - Show anchor tiles, prefixes and suffixes, playable letters, etc.
+    - For each move, show cross-words formed, score for each, multipliers, etc.
 
 # Tests
 - Investigate somewhat-slow board tests (~500ms per test)
 - All cross-words form valid words
-
-# Code Tidy-Up
-- Inconsistent use of cell.tile vs. cell.isEmpty
-- Feels like it should be possible to condense solving functions somewhat
-- Ensure naming is consistent and intuitive across the board
-- Is there a nicer way of building words with no existing prefix, to avoid having to check that it crosses anchor?
 
 # Possible Bugs
 Bugs listed here are uncertain and require further testing to determine if they are real or simply a figment of my imagination

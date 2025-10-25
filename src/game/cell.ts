@@ -28,7 +28,7 @@ export class Cell {
 		this.tile = null;
 		this.reset();
 	}
-	
+
 	/** Utility function to re-initalise derived fields */
 	reset(): void {
 		this.tile = null;
@@ -46,10 +46,6 @@ export class Cell {
 	}
 	
 	placeTile(tile: Tile): void {
-        if (this.tile ) {
-            throw new Error("Cell already has a tile");
-        }
-
         this.tile = tile;
 	}
 

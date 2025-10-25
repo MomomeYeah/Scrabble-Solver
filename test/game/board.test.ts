@@ -1,6 +1,6 @@
 import { expect, test, describe } from 'vitest'
 import { Board } from '../../src/game/board.js'
-import { Tile, BlankTile } from '../../src/game/tile.js'
+import { Tile, BlankTile, BLANK } from '../../src/game/tile.js'
 import { TilePlacement } from '../../src/game/tileplacement.js'
 import { BaseCellType } from '../../src/game/celltype.js'
 
@@ -13,40 +13,45 @@ function emptyTilesGrid() {
     return grid;
 }
 
+// Helper to place a tile on a given cell
+function placeTile(board: Board, row: number, column: number, letter: string) {
+    const tile: Tile | BlankTile = letter === BLANK ? new BlankTile() : new Tile(letter);
+    board.cells[row][column].placeTile(tile);
+}
+
 // Helper to place a word horizontally (ACROSS) starting at row,col
-function placeAcross(tiles: Array<Array<Tile | null>>, row: number, col: number, word: string) {
+function placeAcross(board: Board, row: number, column: number, word: string) {
     for (let i = 0; i < word.length; i++) {
-        tiles[row][col + i] = new Tile(word[i]);
+        placeTile(board, row, column + i, word[i]);
     }
 }
 
 // Helper to place a word vertically (DOWN) starting at row,col
-function placeDown(tiles: Array<Array<Tile | null>>, row: number, col: number, word: string) {
+function placeDown(board: Board, row: number, column: number, word: string) {
     for (let i = 0; i < word.length; i++) {
-        tiles[row + i][col] = new Tile(word[i]);
+        placeTile(board, row + i, column, word[i]);
     }
 }
 
 describe('Board basic behaviours', () => {
-    test('populate places tiles and sets wordsPlayed', () => {
+    test('cell can be populated and reset', () => {
         const board = new Board();
-        const tiles = emptyTilesGrid();
-        tiles[7][7] = new Tile('H');
+        placeTile(board, 7, 7, "H");
 
-        board.populate(tiles);
-
-        expect(board.wordsPlayed).toBe(true);
         expect(board.cells[7][7].tile).not.toBeNull();
         expect(board.cells[7][7].tile!.letter).toEqual('H');
+
+        board.cells[7][7].reset();
+
+        expect(board.cells[7][7].tile).toBeNull();
     });
 
     test('calculateAnchorsAndPlayableLetters marks neighbours as anchors', () => {
         const board = new Board();
-        const tiles = emptyTilesGrid();
         
         // place a single tile in the centre so several anchors appear
-        tiles[7][7] = new Tile('H');
-        board.populate(tiles);
+        placeTile(board, 7, 7, "H");
+        board.calculateAnchorsAndPlayableLetters();
 
         // neighbouring cells should be anchors
         expect(board.cells[7][6].isAnchor).toBe(true);
@@ -127,10 +132,9 @@ describe('Board basic behaviours', () => {
         board.cells[6][6].cellType = new BaseCellType();
         board.cells[6][8].cellType = new BaseCellType();
 
-        const tiles = emptyTilesGrid();
         // create vertical word 'AT' so that (7,7) = 'A' exists and (8,7) = 'T' below it
-        placeDown(tiles, 7, 7, 'AT');
-        board.populate(tiles);
+        placeDown(board, 7, 7, 'AT');
+        board.calculateAnchorsAndPlayableLetters();
 
         // now create placements including the existing middle tile (isNew = false)
         const placements = [
@@ -164,7 +168,8 @@ describe('Board basic behaviours', () => {
 
         // place a tile on a double-letter cell from the initial layout: (0,3) is DL in initialBoard
         tiles[0][3] = new Tile('K');
-        board.populate(tiles);
+        placeTile(board, 0, 3, "K");
+        board.calculateAnchorsAndPlayableLetters();
 
         // place new tiles on (0,4) and (0,5) to form 'KAK' across
         const placements = [
@@ -193,11 +198,9 @@ describe('Board basic behaviours', () => {
 
     test('getScore ignore triple word multiplier for existing tile', () => {
         const board = new Board();
-        const tiles = emptyTilesGrid();
 
         // place a tile on a triple-word cell from the initial layout: (0,7) is TW in initialBoard
-        tiles[0][7] = new Tile('K');
-        board.populate(tiles);
+        placeTile(board, 0, 7, "K");
 
         // place new tiles on (0,8) and (0,9) to form 'KAK' across
         const placements = [
@@ -211,14 +214,12 @@ describe('Board basic behaviours', () => {
     });
 });
 
-describe('Board move generation (getMove) scenarios', () => {
+describe('Board move generation (getMoves) scenarios', () => {
     test('words on an empty board: returns some moves and covers centre anchor', () => {
         const board = new Board();
-        // empty populate (no tiles) — this will leave wordsPlayed false and anchor at centre
-        board.populate(emptyTilesGrid());
 
         const hand = [new Tile('C'), new Tile('A'), new Tile('T'), new Tile('E'), new Tile('R'), new Tile('S'), new Tile('L')];
-        const moves = board.getMove(hand);
+        const moves = board.getMoves(hand);
 
         expect(moves.length).toBeGreaterThan(0);
         // ensure all returned move covers the centre anchor
@@ -233,10 +234,9 @@ describe('Board move generation (getMove) scenarios', () => {
 
     test('words with a blank tile in hand: some returned moves use a BlankTile', () => {
         const board = new Board();
-        board.populate(emptyTilesGrid());
 
         const hand = [new Tile('C'), new Tile('A'), new Tile('T'), new BlankTile(), new Tile('E'), new Tile('R'), new Tile('S')];
-        const moves = board.getMove(hand);
+        const moves = board.getMoves(hand);
 
         // expect there to be at least one move and at least one move that uses a blank
         expect(moves.length).toBeGreaterThan(0);
@@ -246,13 +246,11 @@ describe('Board move generation (getMove) scenarios', () => {
 
     test('words that connect to an existing tile at the edge of the board produce moves including that cell', () => {
         const board = new Board();
-        const tiles = emptyTilesGrid();
         // place a single letter at the right edge (column 14)
-        tiles[7][14] = new Tile('S');
-        board.populate(tiles);
+        placeTile(board, 7, 14, "S");
 
         const hand = [new Tile('A'), new Tile('T'), new Tile('E'), new Tile('R'), new Tile('I'), new Tile('N'), new Tile('G')];
-        const moves = board.getMove(hand);
+        const moves = board.getMoves(hand);
 
         // at least one move should reference the existing edge cell (either as an existing placement or part of the word)
         const connectsToEdge = moves.some((m) => m.getPlacementAt(7, 14) !== null);
@@ -261,13 +259,11 @@ describe('Board move generation (getMove) scenarios', () => {
 
     test('words that include a new placement on the edge of the board produce moves including that cell', () => {
         const board = new Board();
-        const tiles = emptyTilesGrid();
         // place a single letter in the centre (column 7)
-        tiles[7][7] = new Tile('S');
-        board.populate(tiles);
+        placeTile(board, 7, 7, "S");
 
         const hand = [new Tile('T'), new Tile('E'), new Tile('A'), new Tile('M'), new Tile('I'), new Tile('N'), new Tile('G')];
-        const moves = board.getMove(hand);
+        const moves = board.getMoves(hand);
 
         // at least one move should include the cell 7,14
         const connectsToEdge = moves.some((m) => m.getPlacementAt(7, 14) !== null);
@@ -276,15 +272,12 @@ describe('Board move generation (getMove) scenarios', () => {
 
     test('able to place ACROSS words immediately above other ACROSS words (adjacent rows)', () => {
         const board = new Board();
-        const tiles = emptyTilesGrid();
         // place the word "AT" on row 7 columns 7..8
-        tiles[7][7] = new Tile('A');
-        tiles[7][8] = new Tile('T');
-        board.populate(tiles);
+        placeAcross(board, 7, 7, "AT")
 
         // attempt to place a word immediately above (row 6) using similar letters
         const hand = [new Tile('C'), new Tile('A'), new Tile('T'), new Tile('S'), new Tile('E'), new Tile('R'), new Tile('L')];
-        const moves = board.getMove(hand);
+        const moves = board.getMoves(hand);
 
         // at least one move should place tiles on row 6 (i.e., be an ACROSS placed immediately above)
         const placesOnRow6 = moves.some((m) => m.placements.every((p) => p.row === 6));
@@ -293,58 +286,52 @@ describe('Board move generation (getMove) scenarios', () => {
 
     test('multiple fragments in one direction can be connected to form a valid word', () => {
         const board = new Board();
-        const tiles = emptyTilesGrid();
         // two fragments in row 7 with a gap at column 9: "CA" at 7,[7..8] and "TER" at 7,[10..12]
-        placeAcross(tiles, 7, 7, 'CA');
-        placeAcross(tiles, 7, 10, 'TER');
-        board.populate(tiles);
+        placeAcross(board, 7, 7, 'CA');
+        placeAcross(board, 7, 10, 'TER');
 
         // hand contains 'S', 'T', and 'S' to fill the gaps and form 'SCATTERS'
         const hand = [new Tile('T'), new Tile('S'), new Tile('S')];
         // check that SCATTERS is a candidate move
-        const moves = board.getMove(hand);
+        const moves = board.getMoves(hand);
         let candidateWords = moves.map((move) => TilePlacement.toLetterList(move.placements).join(''));
         expect(candidateWords).toContain('SCATTER');
 
         // check that SCATTER can be played from 7,6 but not 7,9 or 7,13
         const leftGapCell = board.cells[7][6];
-        let candidates = board.getWordsPlayableAtPrefixedCell(leftGapCell, hand, "ACROSS");
+        let candidates = board.getWordsPlayableAtCell(leftGapCell, hand, "ACROSS");
         candidateWords = candidates.map((pList) => TilePlacement.toLetterList(pList).join(''));
         expect(candidateWords).toContain('SCATTER');
         const middleGapCell = board.cells[7][9];
-        candidates = board.getWordsPlayableAtPrefixedCell(middleGapCell, hand, "ACROSS");
+        candidates = board.getWordsPlayableAtCell(middleGapCell, hand, "ACROSS");
         candidateWords = candidates.map((pList) => TilePlacement.toLetterList(pList).join(''));
         expect(candidateWords).not.toContain('SCATTER');
         const rightGapCell = board.cells[7][13];
-        candidates = board.getWordsPlayableAtPrefixedCell(rightGapCell, hand, "ACROSS");
+        candidates = board.getWordsPlayableAtCell(rightGapCell, hand, "ACROSS");
         candidateWords = candidates.map((pList) => TilePlacement.toLetterList(pList).join(''));
         expect(candidateWords).not.toContain('SCATTER');
     });
 
     test('words with existing prefix are found', () => {
         const board = new Board();
-        const tiles = emptyTilesGrid();
         // place 'HE' horizontally at cols 6..7
-        placeAcross(tiles, 7, 6, 'HE');
-        board.populate(tiles);
+        placeAcross(board, 7, 6, 'HE');
 
         const hand = [new Tile('A'), new Tile('T')];
         // anchor cell after the existing prefix is at column 8
-        const moves = board.getMove(hand);
+        const moves = board.getMoves(hand);
         const candidateWords = moves.map((move) => TilePlacement.toLetterList(move.placements).join(''));
         expect(candidateWords).toContain('HEAT');
     });
 
     test('words with no existing prefix are found', () => {
         const board = new Board();
-        const tiles = emptyTilesGrid();
         // place 'EAT' horizontally starting from 7,7
-        placeAcross(tiles, 7, 7, 'EAT');
-        board.populate(tiles);
+        placeAcross(board, 7, 7, 'EAT');
 
         const hand = [new Tile('C'), new Tile('H')];
         // anchor cell after the existing prefix is at column 6
-        const moves = board.getMove(hand);
+        const moves = board.getMoves(hand);
         const candidateWords = moves.map((move) => TilePlacement.toLetterList(move.placements).join(''));
         expect(candidateWords).toContain('CHEAT');
     });

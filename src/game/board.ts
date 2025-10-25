@@ -33,15 +33,13 @@ TW,  ,  ,DL,  ,  ,  ,TW,  ,  ,  ,DL,  ,  ,TW`;
 export class Board {
 
     boardSize: number = 15;
-	wordsPlayed: boolean;
 	cells: Array<Array<Cell>>;
 	anchors: Array<Cell>;
     dictionary: Set<string>;
 	trie: Trie;
 	
 	constructor() {
-        this.wordsPlayed = false;
-		this.cells = new Array<Array<Cell>>();
+        this.cells = new Array<Array<Cell>>();
 		this.anchors = new Array<Cell>();
 	
         // initialise board
@@ -81,50 +79,24 @@ export class Board {
 
     /** Fully reset the board, returning it to a pristine state. */
     reset(): void {
-        // reset the wordsPlayed flag
-        this.wordsPlayed = false;
-
-        // clear the list of anchors
-        this.anchors = new Array<Cell>();
-
         // reset each cell
         this.cells.forEach((rowCells) => {
             rowCells.forEach((cell) => {
                 cell.reset();
             });
         });
-    }
-
-    /** Populate the board with the given set of tiles.
-     * 
-     * Any cells without a corresponding tile are reset, meaning this function is safe to
-     * call on an already-populated board.
-     */
-    populate(tiles: Array<Array<Tile | null>>): void {
-        this.wordsPlayed = false;
-        tiles.forEach((rowTiles: Array<Tile | null>, rowIndex: number) => {
-            rowTiles.forEach((tile: Tile | null, columnIndex: number) => {
-                this.cells[rowIndex][columnIndex].reset();
-                if (tile) {
-                    this.cells[rowIndex][columnIndex].placeTile(tile);
-                    this.wordsPlayed = true;
-                }
-            });
-        });
-
-        this.calculateAnchorsAndPlayableLetters();
-    }
+	}
 
     toString(): string {
-		let ret: string = `Words played: ${this.wordsPlayed}\n\n`;
+		let ret: string = "";
         this.cells.forEach((row) => {
             row.forEach((c) => {
                 if (c.isAnchor) {
                     ret += "* ";
-                } else if (c.tile != null) {
-                    ret += c.tile.letter + " ";
-                } else {
+                } else if (c.isEmpty()) {
                     ret += c.cellType.toString();
+                } else {
+                    ret += c.tile!.letter + " ";
                 }
             });
             ret += "\n";
@@ -133,6 +105,7 @@ export class Board {
 		return ret;
 	}
 	
+    /** Return true if the given row and column indexes represent a valid cell on the board */
     inBounds(row: number, column: number): boolean {
 		if (row < 0 || row >= this.boardSize || column < 0 || column >= this.boardSize) {
 			return false;
@@ -183,17 +156,15 @@ export class Board {
         return null;
     }
 
-    /** Calculate the empty prefix for a given cell.
+    /** Calculate the set of preceding empty non-anchor prefix cells for a given cell in a given direction.
      * 
-     * The empty prefix is the continuous set of empty cells, if any, to the left of the given cell
-     * (for ACROSS words) or above the given cell (for DOWN words)
-     * 
-     * Anchor cells do not form part of the empty prefix, as any words including preceding anchor cells
-     * will be calculated as part of the word generation algorithm involving those cells.
+     * This is the set of empty cells, if any, including and to the left of the given cell (for ACROSS words)
+     * or above the given cell (for DOWN words). This does not include other anchor cells, as these cells
+     * will have their own valid moves calculated as part of the getMoves word generation
      */
-    /** For a given cell, calculate the set of preceding empty non-anchor cells for a given direction */
-    getEmptyPrefixForDirection(cell: Cell, direction: PlayDirection): Array<Cell> {
-        const prefixCells: Array<Cell> = new Array<Cell>();
+    getPrecedingEmptyCellsForDirection(cell: Cell, direction: PlayDirection): Array<Cell> {
+        // make sure to include the cell itself
+        const prefixCells: Array<Cell> = [cell];
         let precedingNeighbour: Cell | null = this.getPrecedingNeighbour(cell, direction);
         
         while (precedingNeighbour !== null && precedingNeighbour.isEmpty() && ! precedingNeighbour.isAnchor) {
@@ -248,18 +219,10 @@ export class Board {
      * This function assumes either that the board is empty, or that it has been populated via this.populate()
      */
     calculateAnchorsAndPlayableLetters(): void {
-        // If no words have been played, the only anchor is the middle square. In this scenario, there are no 
-        // cross checks to worry about, as no words have been played yet
-        if (! this.wordsPlayed) {
-            const centreSquareIndex = Math.floor(this.boardSize / 2);
-            this.anchors.push(this.cells[centreSquareIndex][centreSquareIndex]);
-            return;
-        }
-
         // first, clear the set of anchors
         this.anchors = new Array<Cell>();
 
-        // for each empty cell with non-empty neighbours, mark is as an anchor and calculate playable letters
+        // for each empty cell with non-empty neighbours, mark it as an anchor and calculate playable letters
         this.cells.forEach((row, rowIndex) => {
             row.forEach((cell, columnIndex) => {
                 if (cell.isEmpty() && this.hasNeighbour(rowIndex, columnIndex)) {
@@ -279,9 +242,6 @@ export class Board {
                     cell.suffixForDown = this.getSuffixForDirection(cell, "DOWN");
                     cell.playableLettersAcross = this.trie.getValidLettersFromPrefixandSuffix(TilePlacement.toLetterList(cell.prefixForDown), TilePlacement.toLetterList(cell.suffixForDown));
 
-                    // // the overall set of playable letters is the intersection of playableLettersAcross and playableLettersDown
-                    // cell.playableLetters = playableLettersAcross.filter((letter) => playableLettersDown.includes(letter));
-
 //                     console.log(`Cell ${rowIndex}, ${columnIndex}:
 // Prefix for Across: ${cell.prefixForAcross}
 // Suffix for Across: ${cell.suffixForAcross}
@@ -292,11 +252,18 @@ export class Board {
 // Playable letters across: ${cell.playableLettersAcross}
 // Playable letters down: ${cell.playableLettersDown}`);
 
-//                     console.log(this.getEmptyPrefixForDirection(cell, "ACROSS"));
-//                     console.log(this.getEmptyPrefixForDirection(cell, "DOWN"));
+//                     console.log(this.getPrecedingEmptyCellsForDirection(cell, "ACROSS"));
+//                     console.log(this.getPrecedingEmptyCellsForDirection(cell, "DOWN"));
                 }
             });
         });
+
+        // if no anchors have been set, the board must be empty, so the only anchor is the middle square
+        if (this.anchors.length === 0) {
+            const centreSquareIndex = Math.floor(this.boardSize / 2);
+            this.anchors.push(this.cells[centreSquareIndex][centreSquareIndex]);
+            return;
+        }
 
         // console.log(`${this}`);
     }
@@ -363,7 +330,7 @@ export class Board {
 	}
 
     /** Calculate the set of valid suffixes from a given cell, given a Trie node representing a (possibly empty) prefix */
-    getSuffixesFromAnchor(cell: Cell, hand: Array<Tile>, direction: PlayDirection, fromNode: Node, includeEOW: boolean): Array<Array<TilePlacement>> {
+    getSuffixesFromCell(cell: Cell, hand: Array<Tile>, direction: PlayDirection, fromNode: Node, includeEOW: boolean): Array<Array<TilePlacement>> {
         const suffixes: Array<Array<TilePlacement>> = new Array<Array<TilePlacement>>();
 
         const nextCell = this.getFollowingNeighbour(cell, direction);
@@ -377,7 +344,7 @@ export class Board {
             // for non-empty cells, use the Tile that is already there to continue generating the suffix
             } else if (! cell.isEmpty() && child.letter === cell.tile!.letter) {
                 if (nextCell) {
-                    const remainingSuffixes = this.getSuffixesFromAnchor(nextCell, hand, direction, child, true);
+                    const remainingSuffixes = this.getSuffixesFromCell(nextCell, hand, direction, child, true);
                     remainingSuffixes.forEach((remainingSuffix) => {
                         remainingSuffix.unshift(new TilePlacement(cell.tile!, cell.row, cell.column, false));
                         suffixes.push(remainingSuffix);
@@ -390,7 +357,7 @@ export class Board {
                 if (nextCell) {
                     if (Tile.contains(hand, child.letter)) {
                         const remainingTiles = Tile.remove(hand, child.letter);
-                        const remainingSuffixes = this.getSuffixesFromAnchor(nextCell, remainingTiles, direction, child, true);
+                        const remainingSuffixes = this.getSuffixesFromCell(nextCell, remainingTiles, direction, child, true);
                         remainingSuffixes.forEach((remainingSuffix) => {
                             remainingSuffix.unshift(new TilePlacement(new Tile(child.letter), cell.row, cell.column, true));
                             suffixes.push(remainingSuffix);
@@ -399,7 +366,7 @@ export class Board {
                         const remainingTiles = Tile.removeBlank(hand);
                         const tile: BlankTile = new BlankTile();
                         tile.setLetter(child.letter);
-                        const remainingSuffixes = this.getSuffixesFromAnchor(nextCell, remainingTiles, direction, child, true);
+                        const remainingSuffixes = this.getSuffixesFromCell(nextCell, remainingTiles, direction, child, true);
                         remainingSuffixes.forEach((remainingSuffix) => {
                             remainingSuffix.unshift(new TilePlacement(tile, cell.row, cell.column, true));
                             suffixes.push(remainingSuffix);
@@ -423,71 +390,48 @@ export class Board {
         return suffixes;
     }
 
-    /** Calculate the list of valid words that can be played starting from an anchor cell.
-     * 
-     * This works for the following cases:
-     * - when there is an existing prefix already on the board
-     * - words with no existing prefix that start from the anchor cell
-     */
-	getWordsPlayableAtPrefixedCell(cell: Cell, hand: Array<Tile>, direction: PlayDirection): Array<Array<TilePlacement>> {
-		const words: Array<Array<TilePlacement>> = new Array<Array<TilePlacement>>();
+    /** Calculate the full set of valid words that can be played starting from a given cell. */
+	getWordsPlayableAtCell(cell: Cell, hand: Array<Tile>, direction: PlayDirection): Array<Array<TilePlacement>> {
+        const words: Array<Array<TilePlacement>> = new Array<Array<TilePlacement>>();
 
-        // Move down the Trie according to the letters in the prefix
-		const prefixLetters: Array<string> = TilePlacement.toLetterList(cell.getPrefixForDirection(direction));
-        let n: Node | null = this.trie.root;
-		while (prefixLetters.length > 0 && n != null) {
-			n = n.getChild(prefixLetters.shift()!);
-		}
+        const cellPrefix = cell.getPrefixForDirection(direction);
+        // if the cell has an already-placed prefix, find all words starting with that prefix
+        if (cellPrefix.length) {
+            const cellPrefixNode = this.trie.getNodeFromPrefix(TilePlacement.toLetterList(cellPrefix));
+            if (cellPrefixNode) {
+                const suffixes = this.getSuffixesFromCell(cell, hand, direction, cellPrefixNode, false);
+                suffixes.forEach((suffix) => {
+                    words.push(cellPrefix.concat(suffix));
+                });
+            }
+        // if the anchor cell does not have a prefix, then from each empty non-anchor cell preceding it, find all 
+        // valid words. For each word, make sure it crosses the given cell
+        } else {
+            this.getPrecedingEmptyCellsForDirection(cell, direction).forEach((prefixCell) => {
+                 const suffixes = this.getSuffixesFromCell(prefixCell, hand, direction, this.trie.root, false);
+                suffixes.forEach((suffix) => {
+                    if (TilePlacement.coversCell(suffix, cell)) {
+                        words.push(suffix);
+                    }
+                });
+            });
+        }
 
-        // if we get through part or all of the prefix and there are no nodes left
-		// there must be no valid letters we can return
-		if (n == null) {
-			return new Array<Array<TilePlacement>>();
-		}
-
-        // don't check for EOW marker on the first recursion, as we need to place a Tile in the 
-        // anchor cell no matter what
-        this.getSuffixesFromAnchor(cell, hand, direction, n, false).forEach((suffix) => {
-            const cellPrefix: Array<TilePlacement> = cell.getPrefixForDirection(direction);
-            words.push(cellPrefix.concat(suffix));
-        });
-
-		return words;
+        return words;
 	}
 
     /** Calculate the best moves playable by the given hand. Move representations include tiles already on the board */
-    getMove(hand: Array<Tile>): Array<Move> {
+    getMoves(hand: Array<Tile>): Array<Move> {
         const startTime = performance.now();
 
         const moves: Array<Move> = new Array<Move>();
 
+        this.calculateAnchorsAndPlayableLetters();
         this.anchors.forEach((anchorCell) => {
             ["ACROSS", "DOWN"].forEach((direction) => {
-                // if the anchor cell has an already-placed prefix, find all words starting with that prefix and crossing 
-                // the anchor square
-                if (anchorCell.getPrefixForDirection(direction).length) {
-                    const words: Array<Array<TilePlacement>> = this.getWordsPlayableAtPrefixedCell(anchorCell, hand, direction);
-                    words.forEach((word) => {
-                        moves.push(new Move(word, direction, this.getScore(word, direction)));
-                    });
-                } else {
-                    // if the anchor cell does not have a prefix, then for each empty non-anchor cell preceding it, build
-                    // all possible words, taking into account tiles already on the board. For each word, make sure that it 
-                    // crosses the anchor square
-                    const emptyPrefix: Array<Cell> = this.getEmptyPrefixForDirection(anchorCell, direction);
-                    
-                    // we also want to generate words starting from the anchor itself, so add that to the empty prefix
-                    emptyPrefix.unshift(anchorCell);
-
-                    emptyPrefix.forEach((prefixCell) => {
-                        const words: Array<Array<TilePlacement>> = this.getWordsPlayableAtPrefixedCell(prefixCell, hand, direction);
-                        words.forEach((word) => {
-                            if (TilePlacement.coversCell(word, anchorCell)) {
-                                moves.push(new Move(word, direction, this.getScore(word, direction)));
-                            }
-                        }); 
-                    })
-                }
+                this.getWordsPlayableAtCell(anchorCell, hand, direction).forEach((word) => {
+                    moves.push(new Move(word, direction, this.getScore(word, direction)));
+                });
             });
         });
 

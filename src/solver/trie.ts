@@ -31,6 +31,18 @@ export class Trie {
         return this.root.getSuffixes();
     }
 
+    /** Given a prefix, traverse the Trie and return the corresponding node, if any.
+     */
+    getNodeFromPrefix(prefix: Array<string>): Node | null {
+        let n: Node | null = this.root;
+        const prefixChars = prefix.slice();
+		while (prefixChars.length > 0 && n != null) {
+			n = n.getChild(prefixChars.shift()!);
+		}
+
+        return n;
+    }
+
     /** Calculate the set of valid letters that can be played between a given prefix and suffix.
      * 
      * In order for a letter to be valid, the concatenated prefix, letter, and suffix must form a complete word.

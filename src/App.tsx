@@ -19,23 +19,19 @@ const BoardContext = createContext({} as BoardContextProps);
 
 function ScrabbleTile({tile}: {tile: Tile}) {
     return (
-        <>
-            <div className="bg-orange-300 text-gray-800 rounded w-12 h-12 flex items-center justify-center text-2xl font-bold relative">
-                {tile.letter}
-                { tile.points ? <sub className="text-sm absolute bottom-0 right-1">{tile.points}</sub> : null }
-            </div>
-        </>
+        <div className="bg-orange-300 text-gray-800 rounded w-12 h-12 flex items-center justify-center text-2xl font-bold relative">
+            {tile.letter}
+            { tile.points ? <sub className="text-sm absolute bottom-0 right-1">{tile.points}</sub> : null }
+        </div>
     );
 }
 
 function PlacementTile({placement}: {placement: TilePlacement}) {
     return (
-        <>
-            <div className="bg-red-300 ring-1 ring-pink-500 text-gray-800 rounded w-12 h-12 flex items-center justify-center text-2xl font-bold relative">
-                {placement.tile.letter}
-                { placement.tile.points ? <sub className="text-sm absolute bottom-0 right-1">{placement.tile.points}</sub> : null }
-            </div>
-        </>
+        <div className="bg-red-300 ring-1 ring-pink-500 text-gray-800 rounded w-12 h-12 flex items-center justify-center text-2xl font-bold relative">
+            {placement.tile.letter}
+            { placement.tile.points ? <sub className="text-sm absolute bottom-0 right-1">{placement.tile.points}</sub> : null }
+        </div>
     );
 }
 
@@ -102,12 +98,7 @@ function Rack({rackTiles, updateRackTile}: RackProps) {
     )
 }
 
-type ScrabbleCellProps = {
-    cell: Cell,
-    tile: Tile | null
-    updateBoardTile: (tile: Tile | null) => void
-}
-function ScrabbleCell({cell, tile, updateBoardTile}: ScrabbleCellProps) {
+function ScrabbleCell({cell}: {cell: Cell}) {
     const context = useContext(BoardContext);
 
     const [editing, setEditing] = useState(false);
@@ -126,12 +117,12 @@ function ScrabbleCell({cell, tile, updateBoardTile}: ScrabbleCellProps) {
     }
 
     function handleChangeLetter(newLetter: string) {
-        let newTile: Tile | null = null;
         if (newLetter) {
-            newTile = newLetter === BLANK ? new BlankTile() : new Tile(newLetter);
+            const tile = newLetter === BLANK ? new BlankTile() : new Tile(newLetter);
+            cell.placeTile(tile);
+        } else {
+            cell.reset();
         }
-
-        updateBoardTile(newTile);
         setEditing(false);
     }
 
@@ -144,24 +135,20 @@ function ScrabbleCell({cell, tile, updateBoardTile}: ScrabbleCellProps) {
                     type="text"
                     maxLength={1}
                     className={`w-full h-full text-center text-2xl ${populatedCellColor}`}
-                    value={tile ? tile.letter : ''}
+                    value={cell.isEmpty() ? "" : cell.tile!.letter}
                     onChange={(e) => handleChangeLetter(e.target.value.toUpperCase())}
                     onFocus={(e) => e.target.select()}
                     onBlur={() => setEditing(false)}
                     autoFocus
                 />
                 : placement && placement.isNew ? <PlacementTile placement={placement} />
-                : tile ? <ScrabbleTile tile={tile} /> : cell.cellType.toString()
+                : cell.isEmpty() ? cell.cellType.toString() : <ScrabbleTile tile={cell.tile!} />
             }
         </div>
     )
 }
 
-type ScrabbleBoardProps = {
-    boardTiles: Array<Array<Tile | null>>,
-    updateBoardTile: (rowIndex: number, columnIndex: number, tile: Tile | null) => void
-}
-function ScrabbleBoard({boardTiles, updateBoardTile}: ScrabbleBoardProps) {
+function ScrabbleBoard() {
     const context = useContext(BoardContext);
 
     const cells = [];
@@ -171,9 +158,7 @@ function ScrabbleBoard({boardTiles, updateBoardTile}: ScrabbleBoardProps) {
             cells.push(
                 <ScrabbleCell
                     key={key}
-                    cell={context.board.cells[rowIndex][columnIndex]}
-                    tile={boardTiles[rowIndex][columnIndex]}
-                    updateBoardTile={(tile: Tile | null) => updateBoardTile(rowIndex, columnIndex, tile)} />
+                    cell={context.board.cells[rowIndex][columnIndex]} />
             );
         }
     }
@@ -188,21 +173,10 @@ function ScrabbleBoard({boardTiles, updateBoardTile}: ScrabbleBoardProps) {
 
 function App() {
     const [board] = useState<Board>(() => new Board());
-    const [boardSize] = useState<number>(board.boardSize);
 
-    const [boardTiles, setBoardTiles] = useState<Array<Array<Tile | null>>>(Array(boardSize).fill(Array(boardSize).fill(null)));
     const [rackTiles, setRackTiles] = useState<Array<Tile | null>>(Array(7).fill(null));
     const [moves, setMoves] = useState<Array<Move>>(new Array<Move>());
     const [showingMove, setShowingMove] = useState<Move | null>(null);
-
-    function updateBoardTile(rowIndex: number, columnIndex: number, tile: Tile | null) {
-        const newTiles: Array<Array<Tile | null>> = [];
-        boardTiles.forEach((row) => {
-            newTiles.push(row.slice());
-        })
-        newTiles[rowIndex][columnIndex] = tile;
-        setBoardTiles(newTiles);
-    }
 
     function updateRackTile(index: number, tile: Tile | null) {
         const newTiles: Array<Tile | null> = rackTiles.slice();
@@ -211,7 +185,7 @@ function App() {
     }
 
     function handleClickReset() {
-        setBoardTiles(Array(boardSize).fill(Array(boardSize).fill(null)));
+        board.reset();
         setRackTiles(Array(7).fill(null));
         setMoves([]);
         setShowingMove(null);
@@ -223,10 +197,9 @@ function App() {
 
     function handleClickSolve() {
         setShowingMove(null);
-        board.populate(boardTiles);
 
         const hand: Array<Tile> = rackTiles.filter(l => l !== null);
-        const foundMoves = board.getMove(hand);
+        const foundMoves = board.getMoves(hand);
         setMoves(foundMoves);
     }
 
@@ -238,22 +211,17 @@ function App() {
         // set the currently-showing move to null, and clear the set of suggested moves
         setShowingMove(null);
         setMoves(new Array<Move>());
-        
-        // place the move, and update the board
-        const newTiles: Array<Array<Tile | null>> = [];
-        boardTiles.forEach((row) => {
-            newTiles.push(row.slice());
-        })
+
+        // place the move on the board
         move.placements.forEach((placement) => {
-            newTiles[placement.row][placement.column] = placement.tile;
+            board.cells[placement.row][placement.column].placeTile(placement.tile);
         });
-        setBoardTiles(newTiles);
     }
 
     return (
         <>
             <BoardContext.Provider value={{ board, showingMove }}>
-                <ScrabbleBoard boardTiles={boardTiles} updateBoardTile={updateBoardTile} />
+                <ScrabbleBoard />
             </BoardContext.Provider>
             <Rack rackTiles={rackTiles} updateRackTile={updateRackTile} />
             <div className="flex justify-center mt-8">
