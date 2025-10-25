@@ -2,7 +2,6 @@
 - Smoother experience when entering tiles on board / rack
     - Automatically highlight next square?
     - Arrow keys to change direction?
-- Currently not possible to enter a blank tile with a letter set
 - Show history of moves and rack contents
     - May need to put boardTiles back into App.tsx
     - We probably don't care about individual letter entries - maybe just take a snapshot of board state on solve?

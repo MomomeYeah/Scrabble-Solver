@@ -117,9 +117,14 @@ function ScrabbleCell({cell}: {cell: Cell}) {
     }
 
     function handleChangeLetter(newLetter: string) {
+        const existingTile = cell.tile;
         if (newLetter) {
-            const tile = newLetter === BLANK ? new BlankTile() : new Tile(newLetter);
-            cell.placeTile(tile);
+            if (existingTile && existingTile instanceof BlankTile) {
+                existingTile.setLetter(newLetter);
+            } else {
+                const tile = newLetter === BLANK ? new BlankTile() : new Tile(newLetter);
+                cell.placeTile(tile);
+            }
         } else {
             cell.reset();
         }

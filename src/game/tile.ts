@@ -93,10 +93,6 @@ export class BlankTile extends Tile {
     }
     
     setLetter(letter: string): void {
-        if (this.letter != BLANK) {
-            throw new Error("Blank tile has already been set to " + this.letter);
-        }
-
         this.letter = letter;
     }
 }
