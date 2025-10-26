@@ -2,6 +2,11 @@
 - Smoother experience when entering tiles on board / rack
     - Automatically highlight next square?
     - Arrow keys to change direction?
+- Move history items
+    - Display is a little grainy, and looks crap when scaled below 25%. Better way to do this?
+        - Flex-shrink, wrapping X items per row?
+        - imageRendering attribute doesn't seem to do anything
+        - figure out a way to shrink the containing element and use CSS translate scale?
 - Enhance getMove() to allow showing "top N" moves, where N is specified via UI
 - Debug via UI
     - Show anchor tiles, prefixes and suffixes, playable letters, etc.
