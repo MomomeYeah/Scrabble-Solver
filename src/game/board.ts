@@ -104,6 +104,19 @@ export class Board {
 		
 		return ret;
 	}
+
+    /** Return a copy of the cell data for this board */
+    copy() {
+        const cellsCopy = new Array<Array<Cell>>();
+        this.cells.forEach((row, rowIndex) => {
+            cellsCopy[rowIndex] = new Array<Cell>();
+            row.forEach((cell, columnIndex) => {
+                cellsCopy[rowIndex][columnIndex] = cell.copy();
+            });
+        });
+
+        return cellsCopy;
+    }
 	
     /** Return true if the given row and column indexes represent a valid cell on the board */
     inBounds(row: number, column: number): boolean {

@@ -2,9 +2,6 @@
 - Smoother experience when entering tiles on board / rack
     - Automatically highlight next square?
     - Arrow keys to change direction?
-- Show history of moves and rack contents
-    - May need to put boardTiles back into App.tsx
-    - We probably don't care about individual letter entries - maybe just take a snapshot of board state on solve?
 - Enhance getMove() to allow showing "top N" moves, where N is specified via UI
 - Debug via UI
     - Show anchor tiles, prefixes and suffixes, playable letters, etc.

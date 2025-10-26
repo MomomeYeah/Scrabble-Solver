@@ -40,6 +40,14 @@ export class Cell {
 		this.playableLettersAcross = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 		this.playableLettersDown = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 	}
+
+	/** Return a new object representing a copy of this cell. */
+	copy(): Cell {
+		const newCell = new Cell(this.row, this.column, this.cellType);
+		newCell.tile = this.tile;
+
+		return newCell;
+	}
 	
 	isEmpty(): boolean {
 		return ! this.tile;

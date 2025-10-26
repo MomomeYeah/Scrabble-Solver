@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import './App.css'
 
 import { Board } from './game/board';
@@ -11,11 +11,11 @@ import { Move } from './game/move';
 import { BLANK, BlankTile, Tile } from './game/tile';
 import type { TilePlacement } from './game/tileplacement';
 
-type BoardContextProps = {
-    board: Board,
+type BoardHistoryItem = {
+    board: Array<Array<Cell>>,
+    rack: Array<Tile | null>,
     showingMove: Move | null
 }
-const BoardContext = createContext({} as BoardContextProps);
 
 function ScrabbleTile({tile}: {tile: Tile}) {
     return (
@@ -98,11 +98,9 @@ function Rack({rackTiles, updateRackTile}: RackProps) {
     )
 }
 
-function ScrabbleCell({cell}: {cell: Cell}) {
-    const context = useContext(BoardContext);
-
+function ScrabbleCell({cell, showingMove}: {cell: Cell, showingMove: Move | null}) {
     const [editing, setEditing] = useState(false);
-    const placement = context.showingMove && context.showingMove?.getPlacementAt(cell.row, cell.column);
+    const placement = showingMove && showingMove?.getPlacementAt(cell.row, cell.column);
 
     const populatedCellColor = "bg-orange-300";
     let cellColor = "bg-green-400";
@@ -153,116 +151,187 @@ function ScrabbleCell({cell}: {cell: Cell}) {
     )
 }
 
-function ScrabbleBoard() {
-    const context = useContext(BoardContext);
-
-    const cells = [];
-    for (let rowIndex = 0; rowIndex < context.board.boardSize; rowIndex++) {
-        for (let columnIndex = 0; columnIndex < context.board.boardSize; columnIndex++) {
+function ScrabbleBoard({historyItem}: {historyItem: BoardHistoryItem}) {
+    const scrabbleCells = [];
+    for (let rowIndex = 0; rowIndex < historyItem.board.length; rowIndex++) {
+        for (let columnIndex = 0; columnIndex < historyItem.board.length; columnIndex++) {
             const key = `${rowIndex}-${columnIndex}`;
-            cells.push(
+            scrabbleCells.push(
                 <ScrabbleCell
                     key={key}
-                    cell={context.board.cells[rowIndex][columnIndex]} />
+                    cell={historyItem.board[rowIndex][columnIndex]}
+                    showingMove={historyItem.showingMove} />
             );
         }
     }
 
     // It would be nice to use grid-cols-${boardSize} but tailwind will prune any styles it can't statically find
     return (
-        <div className="grid grid-cols-15 gap-1 aspect-square my-16 p-1 border-4 rounded border-pink-800">
-            { cells }
+        <div className="grid grid-cols-15 gap-1 aspect-square my-4 mx-4 p-1 border-4 rounded border-pink-800">
+            { scrabbleCells }
         </div>
     )
 }
 
+type MoveHistoryProps = {
+    history: Array<BoardHistoryItem>,
+    handleGotoHistory: (index: number) => void
+}
+function MoveHistory({history, handleGotoHistory}: MoveHistoryProps) {
+    // only show history if at least one move has been made
+    if (history.length < 2) {
+        return null;
+    }
+
+    const historyItems: Array<ReactNode> = [];
+
+    // show preview for all history items except the most recent, which would just be a copy of the main board
+    history.forEach((historyItem, index) => {
+        historyItems.push(
+            // Capture clicks here to prevent interaction with historical boards when selecting them
+            <div key={index} style={{zoom: "25%"}} onClickCapture={(e) => {handleGotoHistory(index); e.stopPropagation(); e.preventDefault();}}>
+                <ScrabbleBoard historyItem={historyItem} />
+            </div>
+        );
+    });
+
+    return (
+        <div className="grid grid-cols-4 mt-6">
+            {historyItems}
+        </div>
+    );
+}
+
 function App() {
     const [board] = useState<Board>(() => new Board());
-
-    const [rackTiles, setRackTiles] = useState<Array<Tile | null>>(Array(7).fill(null));
+    const [history, setHistory] = useState<Array<BoardHistoryItem>>([{
+        "board": board.copy(),
+        "rack": Array(7).fill(null),
+        "showingMove": null
+    }]);
+    const [currentMove, setCurrentMove] = useState<number>(0);
     const [moves, setMoves] = useState<Array<Move>>(new Array<Move>());
-    const [showingMove, setShowingMove] = useState<Move | null>(null);
+
+    function handleGoToHistory(moveIndex: number) {
+        setMoves(new Array<Move>);
+        setCurrentMove(moveIndex);
+    }
+
+    function viewingLatestHistoryItem() {
+        return currentMove === history.length - 1;
+    }
+
+    function updateCurrentHistoryItem(historyItem: BoardHistoryItem) {
+        const newHistory = history.slice(0, -1);
+        setHistory([...newHistory, historyItem]);
+    }
 
     function updateRackTile(index: number, tile: Tile | null) {
-        const newTiles: Array<Tile | null> = rackTiles.slice();
-        newTiles[index] = tile;
-        setRackTiles(newTiles);
+        const historyItem = history[currentMove];
+        historyItem.rack[index] = tile;
+
+        updateCurrentHistoryItem(historyItem);
     }
 
     function handleClickReset() {
         board.reset();
-        setRackTiles(Array(7).fill(null));
+        setHistory([{
+            "board": board.copy(),
+            "rack": Array(7).fill(null),
+            "showingMove": null
+        }]);
+        setCurrentMove(0);
         setMoves([]);
-        setShowingMove(null);
     }
 
     function handleClickHide() {
-        setShowingMove(null);
+        const historyItem = history[currentMove];
+        historyItem.showingMove = null;
+
+        updateCurrentHistoryItem(historyItem);
     }
 
     function handleClickSolve() {
-        setShowingMove(null);
+        const historyItem = history[currentMove];
+        historyItem.showingMove = null;
 
-        const hand: Array<Tile> = rackTiles.filter(l => l !== null);
+        const hand = historyItem.rack.filter(l => l !== null);
         const foundMoves = board.getMoves(hand);
         setMoves(foundMoves);
+
+        updateCurrentHistoryItem(historyItem);
     }
 
     function handleShowMove(move: Move) {
-        setShowingMove(move);
+        const historyItem = history[currentMove];
+        historyItem.showingMove = move;
+
+        updateCurrentHistoryItem(historyItem);
     }
 
     function handleAcceptMove(move: Move) {
-        // set the currently-showing move to null, and clear the set of suggested moves
-        setShowingMove(null);
-        setMoves(new Array<Move>());
-
         // place the move on the board
         move.placements.forEach((placement) => {
             board.cells[placement.row][placement.column].placeTile(placement.tile);
         });
+
+        // add new history item
+        const newHistoryItem = {
+            "board": board.copy(),
+            "rack": history[currentMove].rack,
+            "showingMove": null
+        }
+        setHistory([...history, newHistoryItem]);
+        setCurrentMove(currentMove + 1);
+
+        // clear the set of suggested moves
+        setMoves(new Array<Move>());
     }
 
     return (
         <>
-            <BoardContext.Provider value={{ board, showingMove }}>
-                <ScrabbleBoard />
-            </BoardContext.Provider>
-            <Rack rackTiles={rackTiles} updateRackTile={updateRackTile} />
-            <div className="flex justify-center mt-8">
-                <button onClick={handleClickSolve} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mb-16 mr-2">
-                    Find Words
-                </button>
-                <button onClick={handleClickReset} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mb-16 ml-2 mr-2">
-                    Reset
-                </button>
-                <button onClick={handleClickHide} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mb-16 ml-2">
-                    Hide Solution
-                </button>
-            </div>
-            <div className="flex justify-center mb-16">
-                { moves.length > 0 ? 
-                    <div>
-                        <h2 className="text-xl font-bold mb-4">Top 10 Moves</h2>
-                        <ul className="list-disc list-inside">
+            <MoveHistory history={history} handleGotoHistory={handleGoToHistory} />
+            {/* Prevent iteraction with board cells or rack unless we are viewing the latest history item */}
+            <div onClickCapture={(e) => { if (! viewingLatestHistoryItem()) { e.stopPropagation(); e.preventDefault(); }}}>
+                <ScrabbleBoard historyItem={history[currentMove]} />
+                <Rack rackTiles={history[currentMove].rack} updateRackTile={updateRackTile} />
+                {/* Hide actions unless we are viewing the latest history item */}
+                { viewingLatestHistoryItem() ?
+                    <div className="flex justify-center mt-8">
+                        <button onClick={handleClickSolve} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mb-16">
+                            Find Words
+                        </button>
+                        <button onClick={handleClickReset} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mb-16 ml-4">
+                            Reset
+                        </button>
+                        <button onClick={handleClickHide} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mb-16 ml-4">
+                            Hide Solution
+                        </button>
+                    </div> : null
+                }
+                <div className="flex justify-center mb-16">
+                    { moves.length > 0 ? 
+                        <div className="w-lg">
+                            <h2 className="text-xl font-bold mb-4">Top 10 Moves</h2>
                             { moves.map((move, index) => (
-                                <li key={index}>
+                                <div key={index} className="flex justify-between">
                                     {move.toString()}
                                     , starting from 
                                     ({move.placements[0].row}, {move.placements[0].column})
                                     ({move.score} points)
-                                    <button onClick={() => handleShowMove(move)} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-4 rounded mb-2 ml-2">
-                                        Show
-                                    </button>
-                                    <button onClick={() => handleAcceptMove(move)} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-4 rounded mb-2 ml-2">
-                                        Accept
-                                    </button>
-                                </li>
+                                    <div>
+                                        <button onClick={() => handleShowMove(move)} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-4 rounded mb-2 ml-2">
+                                            Show
+                                        </button>
+                                        <button onClick={() => handleAcceptMove(move)} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-4 rounded mb-2 ml-2">
+                                            Accept
+                                        </button>
+                                    </div>
+                                </div>
                             )) }
-                        </ul>
-                    </div>
-                    : null
-                }
+                        </div> : null
+                    }
+                </div>
             </div>
         </>
     )
