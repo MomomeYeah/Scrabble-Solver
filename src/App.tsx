@@ -205,7 +205,7 @@ function MoveHistory({history, handleGotoHistory}: MoveHistoryProps) {
 function App() {
     const [board] = useState<Board>(() => new Board());
     const [history, setHistory] = useState<Array<BoardHistoryItem>>([{
-        "board": board.copy(),
+        "board": board.cells,
         "rack": Array(7).fill(null),
         "showingMove": null
     }]);
@@ -213,7 +213,7 @@ function App() {
     const [moves, setMoves] = useState<Array<Move>>(new Array<Move>());
 
     function handleGoToHistory(moveIndex: number) {
-        setMoves(new Array<Move>);
+        setMoves(new Array<Move>());
         setCurrentMove(moveIndex);
     }
 
@@ -236,7 +236,7 @@ function App() {
     function handleClickReset() {
         board.reset();
         setHistory([{
-            "board": board.copy(),
+            "board": board.cells,
             "rack": Array(7).fill(null),
             "showingMove": null
         }]);
@@ -244,7 +244,7 @@ function App() {
         setMoves([]);
     }
 
-    function handleClickHide() {
+    function handleClickHideSolution() {
         const historyItem = history[currentMove];
         historyItem.showingMove = null;
 
@@ -252,14 +252,11 @@ function App() {
     }
 
     function handleClickSolve() {
-        const historyItem = history[currentMove];
-        historyItem.showingMove = null;
+        handleClickHideSolution();
 
-        const hand = historyItem.rack.filter(l => l !== null);
+        const hand = history[currentMove].rack.filter(l => l !== null);
         const foundMoves = board.getMoves(hand);
         setMoves(foundMoves);
-
-        updateCurrentHistoryItem(historyItem);
     }
 
     function handleShowMove(move: Move) {
@@ -270,6 +267,11 @@ function App() {
     }
 
     function handleAcceptMove(move: Move) {
+        // save current board state for most recent history item
+        const historyItem = history[currentMove];
+        historyItem.board = board.copy();
+        updateCurrentHistoryItem(historyItem);
+
         // place the move on the board
         move.placements.forEach((placement) => {
             board.cells[placement.row][placement.column].placeTile(placement.tile);
@@ -278,7 +280,7 @@ function App() {
         // add new history item
         const newHistoryItem = {
             "board": board.copy(),
-            "rack": history[currentMove].rack,
+            "rack": history[currentMove].rack.slice(),
             "showingMove": null
         }
         setHistory([...history, newHistoryItem]);
@@ -304,7 +306,7 @@ function App() {
                         <button onClick={handleClickReset} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mb-16 ml-4">
                             Reset
                         </button>
-                        <button onClick={handleClickHide} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mb-16 ml-4">
+                        <button onClick={handleClickHideSolution} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mb-16 ml-4">
                             Hide Solution
                         </button>
                     </div> : null
