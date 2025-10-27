@@ -421,7 +421,7 @@ export class Board {
         // valid words. For each word, make sure it crosses the given cell
         } else {
             this.getPrecedingEmptyCellsForDirection(cell, direction).forEach((prefixCell) => {
-                 const suffixes = this.getSuffixesFromCell(prefixCell, hand, direction, this.trie.root, false);
+                const suffixes = this.getSuffixesFromCell(prefixCell, hand, direction, this.trie.root, false);
                 suffixes.forEach((suffix) => {
                     if (TilePlacement.coversCell(suffix, cell)) {
                         words.push(suffix);
