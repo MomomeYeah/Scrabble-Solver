@@ -4,6 +4,8 @@ A React-based Scrabble word finder based on the seminal 1988 paper [The World's 
 
 It's not *exactly* the same, because computers have become somewhat faster in the last 30 years [citation needed].
 
+A useful resource for testing purposes is [Play Scrabble](https://playscrabble.com/word-summit) which has a daily Highest Scoring Word challenge.
+
 ## Available Scripts
 
 This project is built using Vite. From the project directory, you can run:
